@@ -1,11 +1,12 @@
 {
   "expo": {
-    "name": "mental-health",
-    "slug": "mental-health",
+    "name": "mental-hell",
+    "slug": "mental-hell",
     "version": "1.0.0",
     "orientation": "portrait",
+    "jsEngine": "hermes",
     "icon": "./assets/images/icon.png",
-    "scheme": "mentalhealth",
+    "scheme": "mentalhell",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
@@ -14,12 +15,14 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "jsEngine": "hermes"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#ffffff",
+        "jsEngine": "hermes"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false

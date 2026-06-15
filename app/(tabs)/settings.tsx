@@ -1,21 +1,13 @@
-import Colors from "@/constants/Colors";
-import { useHealthStore } from "@/src/store/healthStore";
-import { exportHealthDataAsJSON } from "@/src/utils/exporter";
+import React, { useEffect, useState } from "react";
+import { Alert, Platform, StyleSheet, Switch, TouchableOpacity, View } from "react-native";
+import { Text, useTheme, MD3Theme } from "react-native-paper";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Notifications from "expo-notifications";
-import React, { useEffect, useState } from "react";
-import {
-    Alert,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TouchableOpacity,
-    useColorScheme,
-    View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useHealthStore } from "@/src/store/healthStore";
+import { exportHealthDataAsJSON } from "@/src/utils/exporter";
+import { Background } from "@/src/widgets/Background";
+import { CustomCard } from "@/src/widgets/CustomCard";
+import { InfoBox } from "@/src/widgets/InfoBox";
 
 // Configure notification handler
 Notifications.setNotificationHandler({
@@ -29,8 +21,7 @@ Notifications.setNotificationHandler({
 });
 
 export default function SettingsScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? "light"];
+  const theme = useTheme() as MD3Theme;
   const { dailyLogs, weeklyAssessments, clearAllData } = useHealthStore();
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
@@ -82,10 +73,9 @@ export default function SettingsScreen() {
 
   const scheduleNotifications = async () => {
     try {
-      // Cancel all existing notifications
       await Notifications.cancelAllScheduledNotificationsAsync();
 
-      // Schedule morning notification (08:00)
+      // Morning notification (08:00)
       await Notifications.scheduleNotificationAsync({
         content: {
           title: "Mental Health Check-In",
@@ -101,7 +91,7 @@ export default function SettingsScreen() {
         },
       });
 
-      // Schedule midday notification (13:00)
+      // Midday notification (13:00)
       await Notifications.scheduleNotificationAsync({
         content: {
           title: "Mental Health Check-In",
@@ -117,7 +107,7 @@ export default function SettingsScreen() {
         },
       });
 
-      // Schedule evening notification (20:00)
+      // Evening notification (20:00)
       await Notifications.scheduleNotificationAsync({
         content: {
           title: "Mental Health Check-In",
@@ -192,266 +182,196 @@ export default function SettingsScreen() {
   ];
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>
-            Optionen
-          </Text>
-          <Text style={[styles.headerSubtitle, { color: colors.gray }]}>
-            Einstellungen & Datenverwaltung
-          </Text>
+    <Background scrollable={true}>
+      <View style={styles.header}>
+        <Text variant="headlineLarge" style={[styles.headerTitle, { color: theme.colors.onBackground }]}>
+          Optionen
+        </Text>
+        <Text variant="bodyMedium" style={{ color: theme.colors.outline }}>
+          Einstellungen & Datenverwaltung
+        </Text>
+      </View>
+
+      {/* Statistics Section */}
+      <View style={styles.section}>
+        <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+          Datenstatistiken
+        </Text>
+        <View style={styles.statisticsGrid}>
+          {statisticsItems.map((item, index) => (
+            <CustomCard key={index} style={styles.statisticCard}>
+              <Ionicons
+                name={item.icon as any}
+                size={22}
+                color={theme.colors.primary}
+                style={styles.statisticIcon}
+              />
+              <Text variant="headlineSmall" style={[styles.statisticValue, { color: theme.colors.primary }]}>
+                {item.value}
+              </Text>
+              <Text variant="labelSmall" style={{ color: theme.colors.outline, textAlign: 'center' }}>
+                {item.label}
+              </Text>
+            </CustomCard>
+          ))}
         </View>
+      </View>
 
-        {/* Statistics Section */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Datenstatistiken
-          </Text>
-          <View style={styles.statisticsGrid}>
-            {statisticsItems.map((item, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.statisticCard,
-                  {
-                    backgroundColor: colors.card,
-                    borderColor: colors.lightGray,
-                  },
-                ]}
-              >
-                <Ionicons
-                  name={item.icon as any}
-                  size={24}
-                  color={colors.blue}
-                  style={styles.statisticIcon}
-                />
-                <Text style={[styles.statisticValue, { color: colors.blue }]}>
-                  {item.value}
-                </Text>
-                <Text style={[styles.statisticLabel, { color: colors.gray }]}>
-                  {item.label}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </View>
+      {/* Export Section */}
+      <View style={styles.section}>
+        <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+          Daten exportieren
+        </Text>
 
-        {/* Export Section */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Daten exportieren
-          </Text>
-
-          <TouchableOpacity
-            style={[
-              styles.settingItem,
-              { backgroundColor: colors.card, borderColor: colors.lightGray },
-            ]}
-            onPress={handleExport}
-            disabled={isExporting}
-          >
+        <TouchableOpacity onPress={handleExport} disabled={isExporting}>
+          <CustomCard style={styles.settingItem}>
             <View style={styles.settingItemLeft}>
               <Ionicons
                 name="download"
-                size={24}
-                color={colors.blue}
+                size={22}
+                color={theme.colors.primary}
                 style={styles.settingIcon}
               />
-              <View>
-                <Text style={[styles.settingTitle, { color: colors.text }]}>
+              <View style={styles.settingTextContent}>
+                <Text variant="bodyLarge" style={{ fontWeight: "600", color: theme.colors.onSurface }}>
                   JSON-Datei exportieren
                 </Text>
-                <Text
-                  style={[styles.settingDescription, { color: colors.gray }]}
-                >
-                  {isExporting
-                    ? "Wird exportiert..."
-                    : "Lade deine Daten herunter"}
+                <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
+                  {isExporting ? "Wird exportiert..." : "Lade deine Daten herunter"}
                 </Text>
               </View>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.gray} />
-          </TouchableOpacity>
+            <Ionicons name="chevron-forward" size={18} color={theme.colors.outline} />
+          </CustomCard>
+        </TouchableOpacity>
 
-          <View
-            style={[
-              styles.infoSection,
-              { backgroundColor: "#FFF8E1", borderColor: "#FFE082" },
-            ]}
-          >
-            <Ionicons name="information-circle" size={20} color="#FF9800" />
-            <Text style={[styles.infoSectionText, { color: "#333" }]}>
-              Kopiere diese Datei in ein LLM deiner Wahl (z.B. Claude, ChatGPT,
-              NotebookLM) für eine tiefere KI-Analyse deiner mentalen
-              Gesundheitstrends.
-            </Text>
-          </View>
+        <View style={styles.infoSpacing}>
+          <InfoBox text="Kopiere diese Datei in ein LLM deiner Wahl (z.B. Claude, ChatGPT, NotebookLM) für eine tiefere KI-Analyse deiner mentalen Gesundheitstrends." />
         </View>
+      </View>
 
-        {/* Notifications Section */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Erinnerungen
-          </Text>
+      {/* Notifications Section */}
+      <View style={styles.section}>
+        <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+          Erinnerungen
+        </Text>
 
-          <View
-            style={[
-              styles.notificationItem,
-              { backgroundColor: colors.card, borderColor: colors.lightGray },
-            ]}
-          >
-            <View style={styles.notificationItemLeft}>
-              <Ionicons
-                name="notifications"
-                size={24}
-                color={colors.blue}
-                style={styles.settingIcon}
-              />
-              <View style={styles.notificationItemContent}>
-                <Text style={[styles.settingTitle, { color: colors.text }]}>
-                  Tägliche Benachrichtigungen
-                </Text>
-                <Text
-                  style={[styles.settingDescription, { color: colors.gray }]}
-                >
-                  08:00, 13:00, 20:00 Uhr
-                </Text>
-              </View>
-            </View>
-            <Switch
-              value={notificationsEnabled}
-              onValueChange={handleNotificationsToggle}
-              trackColor={{ false: colors.lightGray, true: colors.green }}
-              thumbColor={notificationsEnabled ? colors.green : colors.gray}
-              ios_backgroundColor={colors.lightGray}
+        <CustomCard style={styles.settingItem}>
+          <View style={styles.settingItemLeft}>
+            <Ionicons
+              name="notifications"
+              size={22}
+              color={theme.colors.primary}
+              style={styles.settingIcon}
             />
-          </View>
-
-          {Platform.OS === "web" && (
-            <View
-              style={[
-                styles.infoSection,
-                { backgroundColor: "#EBF3FF", borderColor: colors.lightGray },
-              ]}
-            >
-              <Ionicons name="alert-circle" size={20} color={colors.blue} />
-              <Text style={[styles.infoSectionText, { color: colors.text }]}>
-                Web-Benachrichtigungen verwenden das System zur Anzeige von
-                Browserbenachrichtigungen. Stelle sicher, dass
-                Benachrichtigungen für diese Website in deinen
-                Browser-Einstellungen aktiviert sind.
+            <View style={styles.settingTextContent}>
+              <Text variant="bodyLarge" style={{ fontWeight: "600", color: theme.colors.onSurface }}>
+                Tägliche Benachrichtigungen
+              </Text>
+              <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
+                08:00, 13:00, 20:00 Uhr
               </Text>
             </View>
-          )}
-        </View>
+          </View>
+          <Switch
+            value={notificationsEnabled}
+            onValueChange={handleNotificationsToggle}
+            trackColor={{ false: theme.colors.surfaceVariant, true: theme.colors.primary }}
+            thumbColor={notificationsEnabled ? theme.colors.onPrimary : theme.colors.outline}
+            ios_backgroundColor={theme.colors.surfaceVariant}
+          />
+        </CustomCard>
 
-        {/* Data Management Section */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Datenverwaltung
-          </Text>
+        {Platform.OS === "web" && (
+          <View style={styles.infoSpacing}>
+            <InfoBox text="Web-Benachrichtigungen verwenden das System zur Anzeige von Browserbenachrichtigungen. Stelle sicher, dass Benachrichtigungen für diese Website in deinen Browser-Einstellungen aktiviert sind." />
+          </View>
+        )}
+      </View>
 
-          <TouchableOpacity
+      {/* Data Management Section */}
+      <View style={styles.section}>
+        <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+          Datenverwaltung
+        </Text>
+
+        <TouchableOpacity onPress={handleClearAllData}>
+          <CustomCard 
             style={[
-              styles.settingItem,
-              {
-                backgroundColor: colors.red,
-                opacity: 0.1,
-                borderColor: colors.red,
-              },
+              styles.settingItem, 
+              { 
+                backgroundColor: `${theme.colors.error}14`, // ~8% Opacity Hex
+                borderColor: theme.colors.errorVariant || theme.colors.error 
+              }
             ]}
-            onPress={handleClearAllData}
           >
             <View style={styles.settingItemLeft}>
               <Ionicons
                 name="trash"
-                size={24}
-                color={colors.red}
+                size={22}
+                color={theme.colors.error}
                 style={styles.settingIcon}
               />
-              <View>
-                <Text style={[styles.settingTitle, { color: colors.red }]}>
+              <View style={styles.settingTextContent}>
+                <Text variant="bodyLarge" style={{ fontWeight: "600", color: theme.colors.error }}>
                   Alle Daten löschen
                 </Text>
-                <Text
-                  style={[styles.settingDescription, { color: colors.gray }]}
-                >
+                <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
                   Permanente Löschung aller Einträge
                 </Text>
               </View>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={colors.red} />
-          </TouchableOpacity>
-        </View>
+            <Ionicons name="chevron-forward" size={18} color={theme.colors.error} />
+          </CustomCard>
+        </TouchableOpacity>
+      </View>
 
-        {/* About Section */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            Über diese App
-          </Text>
+      {/* About Section */}
+      <View style={styles.section}>
+        <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+          Über diese App
+        </Text>
 
-          <View
-            style={[
-              styles.infoSection,
-              { backgroundColor: colors.card, borderColor: colors.lightGray },
-            ]}
-          >
-            <Ionicons name="information-circle" size={20} color={colors.blue} />
-            <View style={styles.aboutContent}>
-              <Text style={[styles.aboutTitle, { color: colors.text }]}>
+        <CustomCard style={styles.aboutCard}>
+          <View style={styles.aboutHeaderRow}>
+            <Ionicons name="information-circle" size={22} color={theme.colors.primary} />
+            <View style={styles.settingTextContent}>
+              <Text variant="bodyLarge" style={{ fontWeight: "700", color: theme.colors.onSurface }}>
                 Mental Health Tracker
               </Text>
-              <Text style={[styles.aboutVersion, { color: colors.gray }]}>
+              <Text variant="labelSmall" style={{ color: theme.colors.outline, marginTop: 1 }}>
                 Version 1.0.0
-              </Text>
-              <Text style={[styles.aboutDescription, { color: colors.gray }]}>
-                Eine App zur Verfolgung deiner psychischen Gesundheit mit PHQ-9
-                und GAD-7 Fragebögen. Die Daten werden lokal auf deinem Gerät
-                gespeichert.
               </Text>
             </View>
           </View>
-        </View>
+          <Text variant="bodyMedium" style={[styles.aboutDescription, { color: theme.colors.onSurfaceVariant }]}>
+            Eine App zur Verfolgung deiner psychischen Gesundheit mit PHQ-9
+            und GAD-7 Fragebögen. Die Daten werden verschlüsselt und lokal auf deinem Gerät
+            gespeichert.
+          </Text>
+        </CustomCard>
+      </View>
 
-        <View style={styles.spacing} />
-      </ScrollView>
-    </SafeAreaView>
+      <View style={styles.spacing} />
+    </Background>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-  },
   header: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   headerTitle: {
-    fontSize: 32,
-    fontWeight: "700",
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    fontWeight: "400",
+    fontWeight: "800",
+    letterSpacing: -0.5,
+    marginBottom: 2,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 12,
+    fontWeight: "700",
+    marginBottom: 10,
   },
   statisticsGrid: {
     flexDirection: "row",
@@ -460,33 +380,22 @@ const styles = StyleSheet.create({
   },
   statisticCard: {
     flex: 1,
-    borderWidth: 1,
-    borderRadius: 10,
     padding: 12,
     alignItems: "center",
   },
   statisticIcon: {
-    marginBottom: 6,
+    marginBottom: 4,
   },
   statisticValue: {
-    fontSize: 20,
-    fontWeight: "700",
+    fontWeight: "800",
     marginBottom: 2,
-  },
-  statisticLabel: {
-    fontSize: 11,
-    fontWeight: "500",
-    textAlign: "center",
   },
   settingItem: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 12,
-    marginBottom: 10,
   },
   settingItemLeft: {
     flexDirection: "row",
@@ -495,69 +404,27 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   settingIcon: {
-    marginRight: 4,
+    alignSelf: "center",
   },
-  settingTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-    marginBottom: 2,
-  },
-  settingDescription: {
-    fontSize: 12,
-    fontWeight: "400",
-  },
-  notificationItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    marginBottom: 10,
-  },
-  notificationItemLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-    gap: 12,
-  },
-  notificationItemContent: {
+  settingTextContent: {
     flex: 1,
   },
-  infoSection: {
-    flexDirection: "row",
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 12,
-    gap: 12,
+  infoSpacing: {
     marginTop: 10,
   },
-  infoSectionText: {
-    flex: 1,
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: "400",
+  aboutCard: {
+    padding: 14,
   },
-  aboutContent: {
-    flex: 1,
-  },
-  aboutTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-    marginBottom: 2,
-  },
-  aboutVersion: {
-    fontSize: 12,
-    fontWeight: "500",
-    marginBottom: 6,
+  aboutHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 10,
   },
   aboutDescription: {
-    fontSize: 12,
-    fontWeight: "400",
-    lineHeight: 16,
+    lineHeight: 18,
   },
   spacing: {
-    height: 20,
+    height: 24,
   },
 });

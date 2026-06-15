@@ -1,21 +1,15 @@
-import Colors from "@/constants/Colors";
-import { useHealthStore } from "@/src/store/healthStore";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import Slider from "@react-native-community/slider";
-import React, { useState } from "react";
-import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useColorScheme,
-  View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, { useState } from 'react';
+import { Alert, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { Text, useTheme, Button, MD3Theme } from 'react-native-paper';
+import Slider from '@react-native-community/slider';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useHealthStore } from '@/src/store/healthStore';
+import { Background } from '@/src/widgets/Background';
+import { CustomCard } from '@/src/widgets/CustomCard';
+import { CompletedPill } from '@/src/widgets/CompletedPill';
+import { InfoBox } from '@/src/widgets/InfoBox';
 
-type CheckInType = "morning" | "midday" | "evening";
+type CheckInType = 'morning' | 'midday' | 'evening';
 
 interface CheckInState {
   mood_score: number;
@@ -30,27 +24,26 @@ const CHECK_IN_META: Array<{
   icon: any;
   scheduled_time: string;
 }> = [
-  { type: "morning", label: "Morgen-Check",  icon: "sunny-outline",  scheduled_time: "08:00" },
-  { type: "midday",  label: "Mittags-Check", icon: "cloud-outline",  scheduled_time: "13:00" },
-  { type: "evening", label: "Abend-Check",   icon: "moon-outline",   scheduled_time: "20:00" },
+  { type: 'morning', label: 'Morgen-Check',  icon: 'sunny-outline',  scheduled_time: '08:00' },
+  { type: 'midday',  label: 'Mittags-Check', icon: 'cloud-outline',  scheduled_time: '13:00' },
+  { type: 'evening', label: 'Abend-Check',   icon: 'moon-outline',   scheduled_time: '20:00' },
 ];
 
 export default function TodayScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? "light"];
+  const theme = useTheme() as MD3Theme;
   const { addDailyLog, getDailyLogsByType } = useHealthStore();
 
   const [expandedCheckIn, setExpandedCheckIn] = useState<CheckInType | null>(null);
   const [checkInData, setCheckInData] = useState<Record<CheckInType, CheckInState>>({
-    morning: { mood_score: 5, stress_level: 5, notes: "", opened_at: null },
-    midday:  { mood_score: 5, stress_level: 5, notes: "", opened_at: null },
-    evening: { mood_score: 5, stress_level: 5, notes: "", opened_at: null },
+    morning: { mood_score: 5, stress_level: 5, notes: '', opened_at: null },
+    midday:  { mood_score: 5, stress_level: 5, notes: '', opened_at: null },
+    evening: { mood_score: 5, stress_level: 5, notes: '', opened_at: null },
   });
 
   const handleExpand = (type: CheckInType) => {
     const isOpening = expandedCheckIn !== type;
     setExpandedCheckIn(isOpening ? type : null);
-    // Record opened_at only the first time
+    
     if (isOpening && checkInData[type].opened_at === null) {
       setCheckInData((prev) => ({
         ...prev,
@@ -74,193 +67,201 @@ export default function TodayScreen() {
     });
 
     const labels: Record<CheckInType, string> = {
-      morning: "Morgen",
-      midday: "Mittags",
-      evening: "Abend",
+      morning: 'Morgen',
+      midday: 'Mittags',
+      evening: 'Abend',
     };
-    Alert.alert("Gespeichert ✓", `${labels[type]}-Check wurde gespeichert.`);
+    Alert.alert('Gespeichert ✓', `${labels[type]}-Check wurde erfolgreich verbucht.`);
     setExpandedCheckIn(null);
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+    <Background scrollable={true}>
+      
+      {/* Header Bereich */}
+      <View style={styles.header}>
+        <Text variant="headlineLarge" style={[styles.headerTitle, { color: theme.colors.onBackground }]}>
+          Heute
+        </Text>
+        <Text variant="bodyMedium" style={{ color: theme.colors.outline }}>
+          {new Date().toLocaleDateString('de-DE', {
+            weekday: 'long', day: 'numeric', month: 'long',
+          })}
+        </Text>
+      </View>
 
-        <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Heute</Text>
-          <Text style={[styles.headerSub, { color: colors.gray }]}>
-            {new Date().toLocaleDateString("de-DE", {
-              weekday: "long", day: "numeric", month: "long",
-            })}
-          </Text>
-        </View>
+      {/* Die drei Check-In Karten */}
+      {CHECK_IN_META.map((meta) => {
+        const completed = getDailyLogsByType(meta.type);
+        const isExpanded = expandedCheckIn === meta.type;
+        const data = checkInData[meta.type];
 
-        {CHECK_IN_META.map((meta) => {
-          const completed = getDailyLogsByType(meta.type);
-          const isExpanded = expandedCheckIn === meta.type;
-          const data = checkInData[meta.type];
-
-          return (
-            <View key={meta.type} style={styles.card}>
-              {/* Header row */}
-              <TouchableOpacity
-                style={[
-                  styles.cardHeader,
-                  { backgroundColor: colors.card },
-                  isExpanded && styles.cardHeaderExpanded,
-                ]}
-                onPress={() => !completed && handleExpand(meta.type)}
-                activeOpacity={completed ? 1 : 0.7}
-              >
-                <View style={styles.cardHeaderLeft}>
-                  <Ionicons name={meta.icon} size={24} color={colors.blue} style={styles.icon} />
-                  <View>
-                    <Text style={[styles.cardTitle, { color: colors.text }]}>{meta.label}</Text>
-                    <Text style={[styles.cardSub, { color: colors.gray }]}>
-                      Geplant: {meta.scheduled_time} Uhr
-                    </Text>
-                  </View>
+        return (
+          <CustomCard key={meta.type} style={styles.cardContainer}>
+            
+            {/* Header-Zeile der Karte */}
+            <TouchableOpacity
+              style={styles.cardHeader}
+              onPress={() => !completed && handleExpand(meta.type)}
+              activeOpacity={completed ? 1 : 0.6}
+            >
+              <View style={styles.cardHeaderLeft}>
+                <Ionicons name={meta.icon} size={24} color={theme.colors.primary} style={styles.icon} />
+                <View>
+                  <Text variant="titleMedium" style={{ fontWeight: '700' }}>{meta.label}</Text>
+                  <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
+                    Geplant: {meta.scheduled_time} Uhr
+                  </Text>
                 </View>
+              </View>
 
-                {completed ? (
-                  <View style={styles.row}>
-                    <Ionicons name="checkmark-circle" size={22} color={colors.green} />
-                    <Text style={[styles.badge, { color: colors.green }]}>Erledigt</Text>
-                  </View>
-                ) : (
-                  <View style={styles.row}>
-                    <Ionicons
-                      name={isExpanded ? "chevron-up" : "chevron-down"}
-                      size={18}
-                      color={colors.gray}
-                    />
-                    <Text style={[styles.badge, { color: colors.gray }]}>Offen</Text>
-                  </View>
+              {/* Status-Badge rechts */}
+              {completed ? (
+                <View style={styles.statusRow}>
+                  <Ionicons name="checkmark-circle" size={20} color={theme.colors.primary} />
+                  <Text variant="labelMedium" style={{ color: theme.colors.primary, fontWeight: '700' }}>
+                    Erledigt
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.statusRow}>
+                  <Ionicons
+                    name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                    size={18}
+                    color={theme.colors.outline}
+                  />
+                  <Text variant="labelMedium" style={{ color: theme.colors.outline, fontWeight: '600' }}>
+                    Offen
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+
+            {/* Ausgefüllte Kurz-Zusammenfassung (wenn erledigt) */}
+            {completed && (
+              <View style={[styles.completedRow, { borderTopColor: theme.colors.outlineVariant }]}>
+                <CompletedPill label="Stimmung" value={completed.mood_score} color={theme.colors.primary} />
+                <CompletedPill label="Stress" value={completed.stress_level} color={theme.colors.tertiary} />
+                <View style={styles.completedMeta}>
+                  <Text variant="labelSmall" style={{ color: theme.colors.outline }}>
+                    Start: {formatTime(completed.opened_at)}
+                  </Text>
+                  <Text variant="labelSmall" style={{ color: theme.colors.outline, marginTop: 2 }}>
+                    Ende: {formatTime(completed.saved_at)}
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            {/* Expando-Formular (wenn offen und ausgeklappt) */}
+            {isExpanded && !completed && (
+              <View style={[styles.form, { borderTopColor: theme.colors.outlineVariant }]}>
+                {data.opened_at && (
+                  <Text variant="bodySmall" style={{ color: theme.colors.outline, marginBottom: 12 }}>
+                    Geöffnet um {formatTime(data.opened_at)} Uhr
+                  </Text>
                 )}
-              </TouchableOpacity>
 
-              {/* Completed summary */}
-              {completed && (
-                <View style={[styles.completedRow, { backgroundColor: colors.card, borderTopColor: colors.lightGray }]}>
-                  <CompletedPill label="Stimmung" value={completed.mood_score} color={colors.blue} />
-                  <CompletedPill label="Stress" value={completed.stress_level} color={colors.orange} />
-                  <View style={styles.completedMeta}>
-                    <Text style={[styles.metaText, { color: colors.gray }]}>
-                      Geöffnet {formatTime(completed.opened_at)}
-                    </Text>
-                    <Text style={[styles.metaText, { color: colors.gray }]}>
-                      Gespeichert {formatTime(completed.saved_at)}
-                    </Text>
-                  </View>
-                </View>
-              )}
+                {/* Regler 1: Wohlbefinden */}
+                <SliderRow
+                  label="Wie ist dein Wohlbefinden gerade?"
+                  value={data.mood_score}
+                  color={theme.colors.primary}
+                  trackColor={theme.colors.surfaceVariant}
+                  onChange={(v) =>
+                    setCheckInData((p) => ({ ...p, [meta.type]: { ...p[meta.type], mood_score: v } }))
+                  }
+                  hint={getMoodDescription(data.mood_score)}
+                />
 
-              {/* Form */}
-              {isExpanded && !completed && (
-                <View style={[styles.form, { backgroundColor: colors.card, borderTopColor: colors.lightGray }]}>
-                  {data.opened_at && (
-                    <Text style={[styles.openedAt, { color: colors.gray }]}>
-                      Geöffnet um {formatTime(data.opened_at)}
-                    </Text>
-                  )}
+                {/* Regler 2: Stress */}
+                <SliderRow
+                  label="Wie hoch ist dein Stress-Level?"
+                  value={data.stress_level}
+                  color={theme.colors.tertiary}
+                  trackColor={theme.colors.surfaceVariant}
+                  onChange={(v) =>
+                    setCheckInData((p) => ({ ...p, [meta.type]: { ...p[meta.type], stress_level: v } }))
+                  }
+                />
 
-                  <SliderRow
-                    label="Wohlbefinden"
-                    value={data.mood_score}
-                    color={colors.blue}
-                    lightGray={colors.lightGray}
-                    onChange={(v) =>
-                      setCheckInData((p) => ({ ...p, [meta.type]: { ...p[meta.type], mood_score: v } }))
-                    }
-                    hint={getMoodDescription(data.mood_score)}
-                    textColor={colors.text}
-                  />
+                {/* Optionales Textfeld für Notizen */}
+                <Text variant="labelLarge" style={styles.fieldLabel}>
+                  Notizen (optional)
+                </Text>
+                <TextInput
+                  style={[styles.notesInput, {
+                    backgroundColor: theme.colors.surfaceContainerLow,
+                    color: theme.colors.onSurface,
+                    borderColor: theme.colors.outlineVariant,
+                  }]}
+                  placeholder="Gibt es etwas, das deine Stimmung beeinflusst hat?"
+                  placeholderTextColor={theme.colors.outline}
+                  multiline
+                  numberOfLines={3}
+                  value={data.notes}
+                  onChangeText={(t) =>
+                    setCheckInData((p) => ({ ...p, [meta.type]: { ...p[meta.type], notes: t } }))
+                  }
+                />
 
-                  <SliderRow
-                    label="Stress-Level"
-                    value={data.stress_level}
-                    color={colors.orange}
-                    lightGray={colors.lightGray}
-                    onChange={(v) =>
-                      setCheckInData((p) => ({ ...p, [meta.type]: { ...p[meta.type], stress_level: v } }))
-                    }
-                    textColor={colors.text}
-                  />
+                {/* M3 Absende-Button */}
+                <Button 
+                  mode="contained" 
+                  icon="check" 
+                  onPress={() => handleSave(meta.type)}
+                  style={styles.saveBtn}
+                >
+                  Eintrag speichern
+                </Button>
+              </View>
+            )}
+          </CustomCard>
+        );
+      })}
 
-                  <Text style={[styles.label, { color: colors.text }]}>Notizen (optional)</Text>
-                  <TextInput
-                    style={[styles.notesInput, {
-                      backgroundColor: colors.background,
-                      color: colors.text,
-                      borderColor: colors.lightGray,
-                    }]}
-                    placeholder="Wie geht es dir heute?"
-                    placeholderTextColor={colors.gray}
-                    multiline
-                    numberOfLines={3}
-                    value={data.notes}
-                    onChangeText={(t) =>
-                      setCheckInData((p) => ({ ...p, [meta.type]: { ...p[meta.type], notes: t } }))
-                    }
-                  />
-
-                  <TouchableOpacity
-                    style={[styles.saveBtn, { backgroundColor: colors.blue }]}
-                    onPress={() => handleSave(meta.type)}
-                  >
-                    <Ionicons name="checkmark" size={20} color="#fff" />
-                    <Text style={styles.saveBtnText}>Eintrag speichern</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          );
-        })}
-
-        <View style={[styles.infoBox, { backgroundColor: colorScheme === "dark" ? "#1a2a3a" : "#EBF3FF" }]}>
-          <Ionicons name="information-circle" size={20} color={colors.blue} />
-          <Text style={[styles.infoText, { color: colors.text }]}>
-            Drei tägliche Check-Ins helfen dir, deine Stimmung und dein Stresslevel zu verfolgen.
-          </Text>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+      <InfoBox text="Drei regelmäßige Check-Ins am Tag geben dir das präziseste Bild über deine emotionale Kurve und helfen dem Mental Score, exakte Auswertungen zu treffen." />
+      
+    </Background>
   );
 }
 
-// ── Sub-components ──────────────────────────────────────────────────────────
+// ── Sub-Komponente für Slider-Zeilen ──────────────────────────────────────────
 
-function SliderRow({
-  label, value, color, lightGray, onChange, hint, textColor,
-}: {
-  label: string; value: number; color: string; lightGray: string;
-  onChange: (v: number) => void; hint?: string; textColor: string;
-}) {
+interface SliderRowProps {
+  label: string;
+  value: number;
+  color: string;
+  trackColor: string;
+  onChange: (v: number) => void;
+  hint?: string;
+}
+
+function SliderRow({ label, value, color, trackColor, onChange, hint }: SliderRowProps) {
   return (
     <View style={styles.sliderSection}>
-      <Text style={[styles.label, { color: textColor }]}>{label}</Text>
+      <Text variant="labelLarge" style={{ fontWeight: '600' }}>{label}</Text>
       <View style={styles.sliderRow}>
         <Slider
           style={styles.slider}
-          minimumValue={1} maximumValue={10} step={1}
+          minimumValue={1}
+          maximumValue={10}
+          step={1}
           value={value}
           onValueChange={onChange}
           minimumTrackTintColor={color}
-          maximumTrackTintColor={lightGray}
+          maximumTrackTintColor={trackColor}
           thumbTintColor={color}
         />
-        <Text style={[styles.sliderVal, { color }]}>{Math.round(value)}/10</Text>
+        <Text variant="titleMedium" style={[styles.sliderVal, { color }]}>
+          {Math.round(value)}/10
+        </Text>
       </View>
-      {hint && <Text style={[styles.hint, { color: textColor }]}>{hint}</Text>}
-    </View>
-  );
-}
-
-function CompletedPill({ label, value, color }: { label: string; value: number; color: string }) {
-  return (
-    <View style={styles.pill}>
-      <Text style={[styles.pillLabel, { color }]}>{label}</Text>
-      <Text style={[styles.pillValue, { color }]}>{value}/10</Text>
+      {hint && (
+        <Text variant="bodySmall" style={styles.sliderHint}>
+          {hint}
+        </Text>
+      )}
     </View>
   );
 }
@@ -268,67 +269,63 @@ function CompletedPill({ label, value, color }: { label: string; value: number; 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 function formatTime(ts: number): string {
-  return new Date(ts).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  return new Date(ts).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
 }
 
 function getMoodDescription(score: number): string {
   const s = Math.round(score);
-  if (s <= 2) return "😞 Sehr schlecht";
-  if (s <= 4) return "😕 Schlecht";
-  if (s <= 6) return "😐 Neutral";
-  if (s <= 8) return "🙂 Gut";
-  return "😄 Sehr gut";
+  if (s <= 2) return '😞 Sehr schlecht (Antriebslos / Bedrückt)';
+  if (s <= 4) return '😕 Schlecht (Unruhig / Gestresst)';
+  if (s <= 6) return '😐 Neutral (Ausgeglichen / Okay)';
+  if (s <= 8) return '🙂 Gut (Zufrieden / Produktiv)';
+  return '😄 Sehr gut (Energiegeladen / Glücklich)';
 }
 
 // ── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  scroll: { paddingHorizontal: 16, paddingVertical: 16 },
-  header: { marginBottom: 24 },
-  headerTitle: { fontSize: 32, fontWeight: "700", marginBottom: 4 },
-  headerSub: { fontSize: 14 },
-  card: { marginBottom: 12, borderRadius: 12, overflow: "hidden" },
+  header: { marginBottom: 20 },
+  headerTitle: { fontWeight: '800', letterSpacing: -0.5 },
+  cardContainer: { padding: 0, overflow: 'hidden' },
   cardHeader: {
-    flexDirection: "row", justifyContent: "space-between",
-    alignItems: "center", paddingHorizontal: 16, paddingVertical: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
   },
-  cardHeaderExpanded: { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 },
-  cardHeaderLeft: { flexDirection: "row", alignItems: "center", flex: 1 },
-  icon: { marginRight: 12 },
-  cardTitle: { fontSize: 16, fontWeight: "600", marginBottom: 2 },
-  cardSub: { fontSize: 12 },
-  row: { flexDirection: "row", alignItems: "center", gap: 4 },
-  badge: { fontSize: 12, fontWeight: "600" },
+  cardHeaderLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  icon: { marginRight: 14 },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   completedRow: {
-    flexDirection: "row", alignItems: "center", flexWrap: "wrap",
-    paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, gap: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderTopWidth: 1,
+    gap: 10,
   },
-  pill: { alignItems: "center" },
-  pillLabel: { fontSize: 11, fontWeight: "600", marginBottom: 2 },
-  pillValue: { fontSize: 16, fontWeight: "700" },
-  completedMeta: { marginLeft: "auto" },
-  metaText: { fontSize: 11, textAlign: "right" },
-  form: { paddingHorizontal: 16, paddingVertical: 16, borderTopWidth: 1 },
-  openedAt: { fontSize: 11, marginBottom: 12 },
-  sliderSection: { marginBottom: 16 },
-  label: { fontSize: 14, fontWeight: "600", marginBottom: 10 },
-  sliderRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  slider: { flex: 1, height: 40 },
-  sliderVal: { fontSize: 14, fontWeight: "600", minWidth: 40 },
-  hint: { fontSize: 12, marginTop: 6 },
+  completedMeta: { marginLeft: 'auto' },
+  form: { paddingHorizontal: 16, paddingVertical: 18, borderTopWidth: 1 },
+  sliderSection: { marginBottom: 18 },
+  sliderRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 6 },
+  slider: { flex: 1, height: 40, marginLeft: -10 },
+  sliderVal: { fontWeight: '800', minWidth: 45, textAlign: 'right' },
+  sliderHint: { marginTop: 2, fontWeight: '500', opacity: 0.8 },
+  fieldLabel: { fontWeight: '600', marginBottom: 8, marginTop: 4 },
   notesInput: {
-    borderWidth: 1, borderRadius: 8, paddingHorizontal: 12,
-    paddingVertical: 10, fontSize: 14, minHeight: 80, marginBottom: 4,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
+    minHeight: 90,
+    textAlignVertical: 'top',
   },
   saveBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center",
-    paddingVertical: 12, borderRadius: 8, marginTop: 12, gap: 8,
+    marginTop: 18,
+    borderRadius: 100,
+    paddingVertical: 2,
   },
-  saveBtnText: { fontSize: 16, fontWeight: "600", color: "#fff" },
-  infoBox: {
-    flexDirection: "row", borderRadius: 10, padding: 12,
-    marginTop: 8, gap: 12, marginBottom: 20,
-  },
-  infoText: { flex: 1, fontSize: 12, lineHeight: 16 },
 });

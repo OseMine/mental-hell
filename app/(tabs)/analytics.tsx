@@ -1,36 +1,30 @@
-import Colors from "@/constants/Colors";
-import { MoodChart } from "@/src/components/MoodChart";
-import { useHealthStore } from "@/src/store/healthStore";
+import React, { useState } from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Text, useTheme, Button, ProgressBar, MD3Theme } from 'react-native-paper';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useHealthStore } from '@/src/store/healthStore';
+import { MoodChart } from '@/src/components/MoodChart';
+import { Background } from '@/src/widgets/Background';
+import { CustomCard } from '@/src/widgets/CustomCard';
+import { InfoBox } from '@/src/widgets/InfoBox';
+import { ResultCard } from '@/src/widgets/ResultCard';
 import {
-    GAD7_QUESTIONS,
-    PHQ9_QUESTIONS,
-    QUESTION_OPTIONS,
-    calculateGAD7Score,
-    calculatePHQ9Score,
-    getGAD7Severity,
-    getPHQ9Severity,
-} from "@/src/utils/questionnaire";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import React, { useState } from "react";
-import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-    useColorScheme
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+  GAD7_QUESTIONS,
+  PHQ9_QUESTIONS,
+  QUESTION_OPTIONS,
+  calculateGAD7Score,
+  calculatePHQ9Score,
+  getGAD7Severity,
+  getPHQ9Severity,
+} from '@/src/utils/questionnaire';
 
-type QuestionnaireStep = "menu" | "phq9" | "gad7" | "results";
+type QuestionnaireStep = 'menu' | 'phq9' | 'gad7' | 'results';
 
 export default function AnalyticsScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? "light"];
-  const { getLastSevenDaysLogs, addWeeklyAssessment, getLastWeeklyAssessment } =
-    useHealthStore();
+  const theme = useTheme() as MD3Theme;
+  const { getLastSevenDaysLogs, addWeeklyAssessment, getLastWeeklyAssessment } = useHealthStore();
 
-  const [step, setStep] = useState<QuestionnaireStep>("menu");
+  const [step, setStep] = useState<QuestionnaireStep>('menu');
   const [answers, setAnswers] = useState<number[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [phq9Score, setPHQ9Score] = useState(0);
@@ -39,8 +33,17 @@ export default function AnalyticsScreen() {
   const lastSevenDaysLogs = getLastSevenDaysLogs();
   const lastAssessment = getLastWeeklyAssessment();
 
+  // Helper, um Farb-Feedback basierend auf den klinischen Grenzwerten (M3 Semantics) zu erhalten
+  const getSeverityColor = (score: number, type: 'phq9' | 'gad7') => {
+    const limit = type === 'phq9' ? 10 : 10;
+    const highLimit = type === 'phq9' ? 15 : 15;
+    if (score < limit) return theme.colors.primary; // Unbedenklich / Stabil
+    if (score < highLimit) return theme.colors.tertiary; // Leicht erhöht / Warnung
+    return theme.colors.error; // Kritisch
+  };
+
   const handleStartQuestionnaire = () => {
-    setStep("phq9");
+    setStep('phq9');
     setAnswers([]);
     setCurrentQuestion(0);
   };
@@ -49,223 +52,162 @@ export default function AnalyticsScreen() {
     const newAnswers = [...answers, value];
     setAnswers(newAnswers);
 
-    if (step === "phq9" && currentQuestion < PHQ9_QUESTIONS.length - 1) {
+    if (step === 'phq9' && currentQuestion < PHQ9_QUESTIONS.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
-    } else if (
-      step === "phq9" &&
-      currentQuestion === PHQ9_QUESTIONS.length - 1
-    ) {
-      // Move to GAD7
-      setStep("gad7");
+    } else if (step === 'phq9' && currentQuestion === PHQ9_QUESTIONS.length - 1) {
+      setStep('gad7');
       setCurrentQuestion(0);
-    } else if (step === "gad7" && currentQuestion < GAD7_QUESTIONS.length - 1) {
+    } else if (step === 'gad7' && currentQuestion < GAD7_QUESTIONS.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
-    } else if (
-      step === "gad7" &&
-      currentQuestion === GAD7_QUESTIONS.length - 1
-    ) {
-      // Calculate scores and show results
+    } else if (step === 'gad7' && currentQuestion === GAD7_QUESTIONS.length - 1) {
       const phq9 = calculatePHQ9Score(newAnswers);
       const gad7 = calculateGAD7Score(newAnswers);
       setPHQ9Score(phq9);
       setGAD7Score(gad7);
 
-      // Save to store
       addWeeklyAssessment({
         timestamp: Date.now(),
         phq9_score: phq9,
         gad7_score: gad7,
-        total_wellbeing_score:
-          (10 - (phq9 / 27) * 10 + 10 - (gad7 / 21) * 10) / 2,
+        total_wellbeing_score: (10 - (phq9 / 27) * 10 + 10 - (gad7 / 21) * 10) / 2,
       });
 
-      setStep("results");
+      setStep('results');
     }
   };
 
   const handleBackToMenu = () => {
-    setStep("menu");
+    setStep('menu');
     setAnswers([]);
     setCurrentQuestion(0);
     setPHQ9Score(0);
     setGAD7Score(0);
   };
 
+  // ── Zustand: Menü (Hauptansicht) ──────────────────────────────────────────
   const renderMenu = () => (
     <View>
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>
+        <Text variant="headlineLarge" style={[styles.headerTitle, { color: theme.colors.onBackground }]}>
           Analyse
         </Text>
-        <Text style={[styles.headerSubtitle, { color: colors.gray }]}>
-          Überwache deine mentale Gesundheit
+        <Text variant="bodyMedium" style={{ color: theme.colors.outline }}>
+          Überwache deine mentale Gesundheit im Detail
         </Text>
       </View>
 
-      {/* Chart Section */}
-      <View style={styles.chartSection}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          Stimmungs-Verlauf (7 Tage)
+      {/* Chart Bereich verpackt in CustomCard */}
+      <CustomCard style={styles.chartCard}>
+        <Text variant="titleMedium" style={styles.sectionTitle}>
+          Stimmungs-Verlauf (Letzte 7 Tage)
         </Text>
-        <MoodChart logs={lastSevenDaysLogs} width={350} height={240} />
-      </View>
+        <View style={styles.chartWrapper}>
+          <MoodChart logs={lastSevenDaysLogs} width={340} height={220} />
+        </View>
+      </CustomCard>
 
-      {/* Last Assessment */}
+      {/* Letzte Bewertung (falls vorhanden) */}
       {lastAssessment && (
-        <View
-          style={[
-            styles.assessmentCard,
-            { backgroundColor: colors.card, borderColor: colors.lightGray },
-          ]}
-        >
-          <Text style={[styles.cardTitle, { color: colors.text }]}>
-            Letzte Bewertung
+        <CustomCard style={styles.assessmentCard}>
+          <Text variant="titleSmall" style={{ color: theme.colors.outline, fontWeight: '700', marginBottom: 12 }}>
+            LETZTE BEWERTUNG
           </Text>
           <View style={styles.scoreRow}>
             <View style={styles.scoreItem}>
-              <Text style={[styles.scoreLabel, { color: colors.gray }]}>
-                PHQ-9
+              <Text variant="labelLarge" style={{ color: theme.colors.onSurfaceVariant }}>PHQ-9 (Depression)</Text>
+              <Text variant="headlineSmall" style={[styles.scoreValue, { color: getSeverityColor(lastAssessment.phq9_score, 'phq9') }]}>
+                {lastAssessment.phq9_score} <Text variant="labelSmall" style={{ color: theme.colors.outline }}>/27</Text>
               </Text>
-              <Text
-                style={[
-                  styles.scoreValue,
-                  {
-                    color:
-                      lastAssessment.phq9_score < 10
-                        ? colors.green
-                        : lastAssessment.phq9_score < 15
-                          ? colors.orange
-                          : colors.red,
-                  },
-                ]}
-              >
-                {lastAssessment.phq9_score}/27
-              </Text>
-              <Text style={[styles.scoreSeverity, { color: colors.gray }]}>
+              <Text variant="bodySmall" style={[styles.scoreSeverity, { color: theme.colors.outline }]}>
                 {getPHQ9Severity(lastAssessment.phq9_score)}
               </Text>
             </View>
+
+            <View style={[styles.divider, { backgroundColor: theme.colors.outlineVariant }]} />
+
             <View style={styles.scoreItem}>
-              <Text style={[styles.scoreLabel, { color: colors.gray }]}>
-                GAD-7
+              <Text variant="labelLarge" style={{ color: theme.colors.onSurfaceVariant }}>GAD-7 (Angstzustände)</Text>
+              <Text variant="headlineSmall" style={[styles.scoreValue, { color: getSeverityColor(lastAssessment.gad7_score, 'gad7') }]}>
+                {lastAssessment.gad7_score} <Text variant="labelSmall" style={{ color: theme.colors.outline }}>/21</Text>
               </Text>
-              <Text
-                style={[
-                  styles.scoreValue,
-                  {
-                    color:
-                      lastAssessment.gad7_score < 10
-                        ? colors.green
-                        : lastAssessment.gad7_score < 15
-                          ? colors.orange
-                          : colors.red,
-                  },
-                ]}
-              >
-                {lastAssessment.gad7_score}/21
-              </Text>
-              <Text style={[styles.scoreSeverity, { color: colors.gray }]}>
+              <Text variant="bodySmall" style={[styles.scoreSeverity, { color: theme.colors.outline }]}>
                 {getGAD7Severity(lastAssessment.gad7_score)}
               </Text>
             </View>
           </View>
-        </View>
+        </CustomCard>
       )}
 
-      {/* Questionnaire Button */}
-      <TouchableOpacity
-        style={[styles.startButton, { backgroundColor: colors.blue }]}
+      {/* Primärer M3 Button zum Starten */}
+      <Button
+        mode="contained"
+        icon="clipboard-text"
         onPress={handleStartQuestionnaire}
+        style={styles.actionButton}
+        contentStyle={styles.actionButtonContent}
       >
-        <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
-        <Text style={styles.startButtonText}>
-          Wöchentlicher Check-In starten (PHQ-9 & GAD-7)
-        </Text>
-      </TouchableOpacity>
+        Wöchentlichen Check-In starten
+      </Button>
 
-      <View style={styles.infoBox}>
-        <Ionicons name="information-circle" size={20} color={colors.blue} />
-        <Text style={[styles.infoText, { color: colors.text }]}>
-          Der wöchentliche Fragebogen hilft dir, deine psychische Gesundheit
-          systematisch zu bewerten und Veränderungen im Laufe der Zeit zu
-          verfolgen.
-        </Text>
-      </View>
+      <InfoBox text="Der klinisch validierte PHQ-9 & GAD-7 Kombi-Fragebogen hilft dir, deine psychische Gesundheit systematisch zu screenen und Trends über Monate hinweg aufzudecken." />
     </View>
   );
 
+  // ── Zustand: Fragebogen läuft ──────────────────────────────────────────────
   const renderQuestionnaire = () => {
-    const isPhq9 = step === "phq9";
+    const isPhq9 = step === 'phq9';
     const questions = isPhq9 ? PHQ9_QUESTIONS : GAD7_QUESTIONS;
     const question = questions[currentQuestion];
-    const progress = isPhq9
-      ? ((currentQuestion + 1) / PHQ9_QUESTIONS.length) * 100
-      : ((currentQuestion + 1) / GAD7_QUESTIONS.length) * 100;
+    const progressValue = (currentQuestion + 1) / questions.length;
 
     return (
       <View>
         <View style={styles.questionnaireHeader}>
-          <TouchableOpacity onPress={handleBackToMenu}>
-            <Ionicons name="arrow-back" size={24} color={colors.blue} />
+          <TouchableOpacity onPress={handleBackToMenu} style={styles.backArrow}>
+            <Ionicons name="arrow-back" size={24} color={theme.colors.primary} />
           </TouchableOpacity>
-          <Text style={[styles.questionnaireTitle, { color: colors.text }]}>
-            {isPhq9 ? "PHQ-9 Depression-Skala" : "GAD-7 Angst-Skala"}
+          <Text variant="titleMedium" style={[styles.questionnaireTitle, { color: theme.colors.onBackground }]}>
+            {isPhq9 ? 'PHQ-9 Depression-Skala' : 'GAD-7 Angst-Skala'}
           </Text>
         </View>
 
-        {/* Progress Bar */}
-        <View
-          style={[styles.progressBar, { backgroundColor: colors.lightGray }]}
-        >
-          <View
-            style={[
-              styles.progressFill,
-              { backgroundColor: colors.blue, width: `${progress}%` },
-            ]}
-          />
-        </View>
+        {/* Reines M3 Progressbar-Element */}
+        <ProgressBar progress={progressValue} color={theme.colors.primary} style={styles.progressBar} />
 
-        <Text style={[styles.progressText, { color: colors.gray }]}>
+        <Text variant="labelMedium" style={{ color: theme.colors.outline, marginBottom: 16 }}>
           Frage {currentQuestion + 1} von {questions.length}
         </Text>
 
-        {/* Question */}
-        <View
-          style={[
-            styles.questionContainer,
-            { backgroundColor: colors.card, borderColor: colors.lightGray },
-          ]}
-        >
-          <Text style={[styles.question, { color: colors.text }]}>
+        {/* Die Frage selbst */}
+        <CustomCard style={styles.questionContainer}>
+          <Text variant="titleMedium" style={[styles.questionText, { color: theme.colors.onSurface }]}>
             {question}
           </Text>
-        </View>
+        </CustomCard>
 
-        {/* Options */}
+        {/* Antwort-Optionen als formschöne Touchables */}
         <View style={styles.optionsContainer}>
           {QUESTION_OPTIONS.map((option, index) => (
             <TouchableOpacity
               key={index}
               style={[
                 styles.optionButton,
-                { backgroundColor: colors.card, borderColor: colors.lightGray },
+                { backgroundColor: theme.colors.surface, borderColor: theme.colors.outlineVariant },
               ]}
               onPress={() => handleAnswerQuestion(option.value)}
             >
               <View style={styles.optionContent}>
-                <View
-                  style={[styles.optionDot, { backgroundColor: colors.blue }]}
-                />
+                <View style={[styles.optionDot, { backgroundColor: theme.colors.primary }]} />
                 <View style={styles.optionTextContainer}>
-                  <Text style={[styles.optionLabel, { color: colors.text }]}>
+                  <Text variant="bodyMedium" style={{ fontWeight: '600', color: theme.colors.onSurface }}>
                     {option.label}
                   </Text>
-                  <Text style={[styles.optionValue, { color: colors.gray }]}>
-                    Punkte: {option.value}
+                  <Text variant="labelSmall" style={{ color: theme.colors.outline, marginTop: 1 }}>
+                    Wertung: +{option.value} {option.value === 1 ? 'Punkt' : 'Punkte'}
                   </Text>
                 </View>
               </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.gray} />
+              <Ionicons name="chevron-forward" size={18} color={theme.colors.outline} />
             </TouchableOpacity>
           ))}
         </View>
@@ -273,343 +215,121 @@ export default function AnalyticsScreen() {
     );
   };
 
+  // ── Zustand: Ergebnisse der aktuellen Session ─────────────────────────────────
   const renderResults = () => (
     <View>
-      <TouchableOpacity style={styles.backButton} onPress={handleBackToMenu}>
-        <Ionicons name="arrow-back" size={24} color={colors.blue} />
-        <Text style={[styles.backButtonText, { color: colors.blue }]}>
-          Zurück
+      <TouchableOpacity style={styles.backButtonInline} onPress={handleBackToMenu}>
+        <Ionicons name="arrow-back" size={20} color={theme.colors.primary} />
+        <Text variant="labelLarge" style={{ color: theme.colors.primary, fontWeight: '700' }}>
+          Zurück zur Übersicht
         </Text>
       </TouchableOpacity>
 
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>
-          Ergebnisse
+        <Text variant="headlineMedium" style={{ fontWeight: '800' }}>
+          Deine Ergebnisse
         </Text>
       </View>
 
-      {/* PHQ-9 Result */}
-      <View
-        style={[
-          styles.resultCard,
-          { backgroundColor: colors.card, borderColor: colors.lightGray },
-        ]}
-      >
-        <View style={styles.resultHeader}>
-          <Ionicons name="sad" size={32} color={colors.orange} />
-          <View>
-            <Text style={[styles.resultTitle, { color: colors.text }]}>
-              PHQ-9 Depression-Score
-            </Text>
-            <Text style={[styles.resultSeverity, { color: colors.gray }]}>
-              {getPHQ9Severity(phq9Score)}
-            </Text>
-          </View>
-        </View>
-        <Text style={[styles.resultScore, { color: colors.blue }]}>
-          {phq9Score} / 27 Punkte
-        </Text>
-        <Text style={[styles.resultDescription, { color: colors.gray }]}>
-          {getPhq9Description(phq9Score)}
-        </Text>
-      </View>
+      {/* PHQ-9 Card über das Widget */}
+      <ResultCard
+        title="PHQ-9 Depression-Score"
+        severity={getPHQ9Severity(phq9Score)}
+        score={phq9Score}
+        maxScore={27}
+        description={getPhq9Description(phq9Score)}
+        iconName="sad-outline"
+        scoreColor={getSeverityColor(phq9Score, 'phq9')}
+      />
 
-      {/* GAD-7 Result */}
-      <View
-        style={[
-          styles.resultCard,
-          { backgroundColor: colors.card, borderColor: colors.lightGray },
-        ]}
-      >
-        <View style={styles.resultHeader}>
-          <Ionicons name="alert-circle" size={32} color={colors.orange} />
-          <View>
-            <Text style={[styles.resultTitle, { color: colors.text }]}>
-              GAD-7 Angst-Score
-            </Text>
-            <Text style={[styles.resultSeverity, { color: colors.gray }]}>
-              {getGAD7Severity(gad7Score)}
-            </Text>
-          </View>
-        </View>
-        <Text style={[styles.resultScore, { color: colors.blue }]}>
-          {gad7Score} / 21 Punkte
-        </Text>
-        <Text style={[styles.resultDescription, { color: colors.gray }]}>
-          {getGad7Description(gad7Score)}
-        </Text>
-      </View>
+      {/* GAD-7 Card über das Widget */}
+      <ResultCard
+        title="GAD-7 Angst-Score"
+        severity={getGAD7Severity(gad7Score)}
+        score={gad7Score}
+        maxScore={21}
+        description={getGad7Description(gad7Score)}
+        iconName="alert-circle-outline"
+        scoreColor={getSeverityColor(gad7Score, 'gad7')}
+      />
 
-      {/* Recommendation */}
-      <View style={[styles.infoBox, { backgroundColor: "#F0F0F0" }]}>
-        <Ionicons name="bulb" size={20} color={colors.blue} />
-        <Text style={[styles.infoText, { color: colors.text }]}>
-          Exportiere diese Daten und teile sie mit deinem Arzt oder Therapeuten
-          für eine fundierte klinische Bewertung.
-        </Text>
-      </View>
+      <InfoBox text="Hinweis: Diese App ersetzt keine fachärztliche Diagnose. Solltest du dich über längere Zeit unwohl fühlen, suche bitte das Gespräch mit Therapeuten oder Medizinern." />
 
-      <TouchableOpacity
-        style={[styles.continueButton, { backgroundColor: colors.blue }]}
+      <Button
+        mode="contained-tonal"
         onPress={handleBackToMenu}
+        style={styles.finishButton}
       >
-        <Text style={styles.continueButtonText}>Zu Analyse zurück</Text>
-      </TouchableOpacity>
+        Ergebnisse schließen
+      </Button>
     </View>
   );
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {step === "menu" && renderMenu()}
-        {(step === "phq9" || step === "gad7") && renderQuestionnaire()}
-        {step === "results" && renderResults()}
-      </ScrollView>
-    </SafeAreaView>
+    <Background scrollable={true}>
+      {step === 'menu' && renderMenu()}
+      {(step === 'phq9' || step === 'gad7') && renderQuestionnaire()}
+      {step === 'results' && renderResults()}
+    </Background>
   );
 }
 
+// ── Beschreibungs-Mapper (unverändert, bereinigt) ───────────────────────────
+
 function getPhq9Description(score: number): string {
-  if (score < 5)
-    return "Minimale Symptome. Du zeigst nur wenige Anzeichen von Depression.";
-  if (score < 10)
-    return "Leichte Depression. Es könnte hilfreich sein, mit jemandem zu sprechen.";
-  if (score < 15)
-    return "Moderate Depression. Eine ärztliche Beratung wird empfohlen.";
-  if (score < 20)
-    return "Moderat schwere Depression. Suche professionelle Hilfe auf.";
-  return "Schwere Depression. Kontaktiere sofort einen Arzt oder Therapeuten.";
+  if (score < 5) return 'Minimale Symptome. Du zeigst aktuell keine signifikanten Anzeichen einer depressiven Belastung.';
+  if (score < 10) return 'Leichte Depression. Phasenweise Verstimmungen liegen vor. Achtsamkeitspraktiken können helfen.';
+  if (score < 15) return 'Moderate Depression. Eine ärztliche oder therapeutische Beratung zur Abklärung wird empfohlen.';
+  if (score < 20) return 'Moderat schwere Depression. Belastungen engen den Alltag ein. Professionelle Begleitung ist ratsam.';
+  return 'Schwere Depression. Akuter Handlungsbedarf. Bitte kontaktiere umgehend einen Arzt, Therapeuten oder Krisendienst.';
 }
 
 function getGad7Description(score: number): string {
-  if (score < 5)
-    return "Minimale Angst. Du befindest dich in einem guten emotionalen Zustand.";
-  if (score < 10)
-    return "Leichte Angst. Achtsamkeit und Selbstfürsorge können helfen.";
-  if (score < 15)
-    return "Moderate Angst. Eine ärztliche Beratung wird empfohlen.";
-  return "Schwere Angst. Kontaktiere einen Fachmann zur Unterstützung.";
+  if (score < 5) return 'Minimale Angst. Dein emotionales Grundgerüst ist derzeit stabil und entspannt.';
+  if (score < 10) return 'Leichte Angst. Sorgen-Spiralen treten vereinzelt auf. Stressmanagement reguliert das Befinden.';
+  if (score < 15) return 'Moderate Angst. Nervosität und Anspannung nehmen zu. Eine professionelle Beratung ist zu empfehlen.';
+  return 'Schwere Angst. Starke Einschränkungen im Alltag durch Angst- oder Panikgefühle. Suche zeitnah fachliche Hilfe.';
 }
 
+// ── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-  },
-  header: {
-    marginBottom: 24,
-  },
-  headerTitle: {
-    fontSize: 32,
-    fontWeight: "700",
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    fontWeight: "400",
-  },
-  chartSection: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 12,
-  },
-  assessmentCard: {
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 16,
-  },
-  cardTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 16,
-  },
-  scoreRow: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-  },
-  scoreItem: {
-    alignItems: "center",
-    flex: 1,
-  },
-  scoreLabel: {
-    fontSize: 12,
-    fontWeight: "500",
-    marginBottom: 4,
-  },
-  scoreValue: {
-    fontSize: 20,
-    fontWeight: "700",
-    marginBottom: 4,
-  },
-  scoreSeverity: {
-    fontSize: 11,
-    fontWeight: "400",
-  },
-  startButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 14,
-    borderRadius: 8,
-    marginTop: 16,
-    marginBottom: 16,
-    gap: 8,
-  },
-  startButtonText: {
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  infoBox: {
-    flexDirection: "row",
-    backgroundColor: "#EBF3FF",
-    borderRadius: 10,
-    padding: 12,
-    gap: 12,
-    marginBottom: 20,
-  },
-  infoText: {
-    flex: 1,
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: "400",
-  },
-  // Questionnaire
-  questionnaireHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-    gap: 12,
-  },
-  questionnaireTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    flex: 1,
-  },
-  progressBar: {
-    height: 6,
-    borderRadius: 3,
-    marginBottom: 8,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: 3,
-  },
-  progressText: {
-    fontSize: 12,
-    fontWeight: "400",
-    marginBottom: 16,
-  },
-  questionContainer: {
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 20,
-  },
-  question: {
-    fontSize: 16,
-    fontWeight: "600",
-    lineHeight: 22,
-  },
-  optionsContainer: {
-    gap: 10,
-    marginBottom: 20,
-  },
+  header: { marginBottom: 20 },
+  headerTitle: { fontWeight: '800', letterSpacing: -0.5, marginBottom: 2 },
+  chartCard: { padding: 14, marginBottom: 16 },
+  sectionTitle: { fontWeight: '700', marginBottom: 12 },
+  chartWrapper: { alignItems: 'center', justifyContent: 'center', marginVertical: 4 },
+  assessmentCard: { padding: 16, marginBottom: 20 },
+  scoreRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  scoreItem: { flex: 1, alignItems: 'center' },
+  divider: { width: 1, height: 50, opacity: 0.3 },
+  scoreValue: { fontWeight: '800', marginTop: 4, marginBottom: 2 },
+  scoreSeverity: { fontWeight: '600', textAlign: 'center' },
+  actionButton: { marginTop: 4, marginBottom: 16, borderRadius: 100 },
+  actionButtonContent: { paddingVertical: 6 },
+  
+  // Questionnaire Layouts
+  questionnaireHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 14, gap: 8 },
+  backArrow: { paddingVertical: 4, paddingRight: 8 },
+  questionnaireTitle: { fontWeight: '700', flex: 1 },
+  progressBar: { height: 8, borderRadius: 4, marginBottom: 8 },
+  questionContainer: { padding: 20, marginBottom: 16 },
+  questionText: { fontWeight: '700', lineHeight: 24, textAlign: 'center' },
+  optionsContainer: { gap: 10, marginBottom: 24 },
   optionButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-  },
-  optionContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-    gap: 12,
-  },
-  optionDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  optionTextContainer: {
-    flex: 1,
-  },
-  optionLabel: {
-    fontSize: 14,
-    fontWeight: "500",
-    marginBottom: 2,
-  },
-  optionValue: {
-    fontSize: 11,
-    fontWeight: "400",
-  },
-  // Results
-  backButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 20,
-  },
-  backButtonText: {
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  resultCard: {
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 16,
-    marginBottom: 16,
-  },
-  resultHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginBottom: 12,
-  },
-  resultTitle: {
-    fontSize: 15,
-    fontWeight: "600",
-  },
-  resultSeverity: {
-    fontSize: 11,
-    fontWeight: "400",
-  },
-  resultScore: {
-    fontSize: 24,
-    fontWeight: "700",
-    marginBottom: 8,
-  },
-  resultDescription: {
-    fontSize: 13,
-    fontWeight: "400",
-    lineHeight: 18,
-  },
-  continueButton: {
+    borderRadius: 14,
+    paddingHorizontal: 16,
     paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 20,
-    marginBottom: 20,
   },
-  continueButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
+  optionContent: { flexDirection: 'row', alignItems: 'center', flex: 1, gap: 14 },
+  optionDot: { width: 10, height: 10, borderRadius: 5 },
+  optionTextContainer: { flex: 1 },
+  
+  // Results
+  backButtonInline: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16 },
+  finishButton: { borderRadius: 100, paddingVertical: 2, marginBottom: 24 },
 });
