@@ -1,0 +1,52 @@
+name: Expo Android Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch: # Erlaubt es dir, den Build jederzeit manuell auf GitHub zu starten
+
+jobs:
+  build:
+    name: Build Android APK/AAB
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm' # Falls du yarn/pnpm nutzt, hier 'yarn' oder 'pnpm' eintragen
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17' # Expo SDK 50+ benötigt Java 17
+
+      - name: Setup Expo CLI & EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install Dependencies
+        run: npm ci # Nutze 'yarn install --frozen-lockfile' oder 'pnpm i --frozen-lockfile' falls nötig
+
+      - name: Build Android (Local)
+        # Nutze '--profile preview' für eine APK oder '--profile production' für eine AAB (Play Store)
+        run: eas build --platform android --local --profile preview
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Upload Android Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-app-build
+          path: |
+            *.apk
+            *.aab
