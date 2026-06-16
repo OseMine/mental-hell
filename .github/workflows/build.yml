@@ -1,15 +1,15 @@
-name: Expo Android Build
+name: Native Android Build (Ohne EAS)
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch: # Erlaubt es dir, den Build jederzeit manuell auf GitHub zu starten
+  workflow_dispatch:
 
 jobs:
   build:
-    name: Build Android APK/AAB
+    name: Build Android APK
     runs-on: ubuntu-latest
 
     steps:
@@ -20,33 +20,34 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm' # Falls du yarn/pnpm nutzt, hier 'yarn' oder 'pnpm' eintragen
+          cache: 'npm'
 
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17' # Expo SDK 50+ benötigt Java 17
+          java-version: '17' # Wichtig für moderne Expo/Android-Builds
 
-      - name: Setup Expo CLI & EAS
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
       - name: Install Dependencies
-        run: npm ci # Nutze 'yarn install --frozen-lockfile' oder 'pnpm i --frozen-lockfile' falls nötig
+        run: npm ci
 
-      - name: Build Android (Local)
-        # Nutze '--profile preview' für eine APK oder '--profile production' für eine AAB (Play Store)
-        run: eas build --platform android --local --profile preview
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      - name: Generate Native Android Folder
+        # Erstellt den /android Ordner basierend auf deiner app.json
+        run: npx expo prebuild --platform android
+
+      - name: Build APK with Gradle
+        # Führt den nativen Android-Build aus
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease
 
       - name: Upload Android Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android-app-build
-          path: |
-            *.apk
-            *.aab
+          name: android-apk-build
+          # Gradle legt die fertige APK standardmäßig in diesem Verzeichnis ab:
+          path: android/app/build/outputs/apk/release/app-release.apk

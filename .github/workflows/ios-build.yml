@@ -1,0 +1,62 @@
+name: iOS Simulator Build (Ohne EAS / Unsigniert)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build iOS Simulator App
+    # WICHTIG: iOS-Builds benötigen zwingend ein macOS-Betriebssystem
+    runs-on: macos-15 
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Generate Native iOS Folder
+        # Erstellt den /ios Ordner basierend auf deiner app.json
+        run: npx expo prebuild --platform ios
+
+      - name: Install CocoaPods
+        # Installiert die nativen iOS-Abhängigkeiten
+        run: |
+          cd ios
+          pod install
+
+      - name: Build iOS App for Simulator
+        # Baut die App explizit für die Simulator-Architektur (x86_64/arm64) ohne Code-Signing
+        run: |
+          xcodebuild -workspace ios/*.xcworkspace \
+            -scheme $(basename ios/*.xcworkspace .xcworkspace) \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_IDENTITY="" \
+            PROVISIONING_PROFILE_SPECIFIER=""
+
+      - name: Zip App Bundle
+        # Der Simulator braucht den .app-Ordner. Wir zippen ihn für den Upload.
+        run: |
+          cd build/Build/Products/Debug-iphonesimulator
+          zip -r ../../../../ios-simulator-app.zip *.app
+
+      - name: Upload iOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-simulator-build
+          path: ios-simulator-app.zip
