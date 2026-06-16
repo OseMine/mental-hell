@@ -21,8 +21,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff",
-        "jsEngine": "hermes"
+        "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
@@ -30,7 +29,18 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "pwa": {
+        "name": "Mental Hell",
+        "shortName": "MentalHell",
+        "description": "Dein Begleiter für mentale Gesundheit",
+        "backgroundColor": "#ffffff",
+        "themeColor": "#ffffff",
+        "display": "standalone",
+        "orientation": "portrait",
+        "icon": "./assets/images/icon.png",
+        "startUrl": "/"
+      }
     },
     "plugins": [
       "expo-router",
