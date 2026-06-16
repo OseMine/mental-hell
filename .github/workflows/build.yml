@@ -38,6 +38,7 @@ jobs:
         run: npm ci # Nutze 'yarn install --frozen-lockfile' oder 'pnpm i --frozen-lockfile' falls nötig
 
       - name: Build Android (Local)
+        run: eas init
         # Nutze '--profile preview' für eine APK oder '--profile production' für eine AAB (Play Store)
         run: eas build --platform android --local --profile preview
         env:
