@@ -1,0 +1,26 @@
+      - name: Build Unsigned IPA
+        run: |
+          xcodebuild -workspace ios/*.xcworkspace \
+            -scheme $(basename ios/*.xcworkspace .xcworkspace) \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_IDENTITY="" \
+            PROVISIONING_PROFILE_SPECIFIER="" \
+            clean build
+            
+      - name: Package IPA
+        # Da Xcode ohne Zertifikate keine .ipa erstellt, bauen wir sie manuell aus dem .app Bundle
+        run: |
+          mkdir -p Payload
+          cp -r build/Build/Products/Release-iphoneos/*.app Payload/
+          zip -r ios-unsigned-app.ipa Payload
+          rm -rf Payload
+
+      - name: Upload iOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-unsigned-ipa
+          path: ios-unsigned-app.ipa
