@@ -1,7 +1,7 @@
 import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { useMaterial3Theme } from "react-native-material3-theme";
 import {
     Button,
@@ -135,18 +135,18 @@ export default function OnboardingScreen() {
             <View style={styles.colorPalette}>
               {["#6750A4", "#2E7D32", "#C62828", "#0288D1", "#F57C00"].map(
                 (color) => (
-                  <Button
+                  <TouchableOpacity
                     key={color}
-                    mode={accentColor === color ? "contained" : "outlined"}
-                    style={[styles.colorButton, { backgroundColor: color }]}
-                    labelStyle={styles.colorButtonLabel}
                     onPress={() => {
                         setAccentColor(color);
-                        
+                        updateTheme(color);
                     }}
-                  >
-                    {accentColor === color ? "✓" : ""}
-                  </Button>
+                    style={[
+                      styles.colorSwatch,
+                      { backgroundColor: color },
+                      accentColor === color && styles.colorSwatchSelected,
+                    ]}
+                  />
                 ),
               )}
             </View>
@@ -286,22 +286,23 @@ const styles = StyleSheet.create({
   },
   colorPalette: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "center",
+    gap: 16,
     marginTop: 10,
   },
-  colorButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: "center",
-    alignItems: "center",
-    minWidth: 50,
+  colorSwatch: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
   },
-  colorButtonLabel: {
-    color: "#ffffff",
-    fontSize: 18,
-    marginHorizontal: 0,
-    marginLeft: 2,
+  colorSwatchSelected: {
+    borderWidth: 3,
+    borderColor: "#ffffff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4,
   },
   card: {
     marginVertical: 10,

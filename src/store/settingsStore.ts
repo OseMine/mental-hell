@@ -28,7 +28,6 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: "settings",
-      // 2. Nutze createJSONStorage, um AsyncStorage sauber für Zustand zu wrappen
       storage: createJSONStorage(() => AsyncStorage),
     },
   ),

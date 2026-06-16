@@ -1,18 +1,14 @@
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useSettingsStore } from '../src/store/settingsStore';
 
-export default function Root() {
+export default function Index() {
   const router = useRouter();
+
   useEffect(() => {
-    AsyncStorage.getItem('onboarding_done').then(done => {
-      if (done) {
-        router.replace('/(tabs)');
-      } else {
-        // Hier fehlte der abschließende Slash im String selbst:
-        router.replace('/onboarding'); 
-      }
-    });
+    const timer = setTimeout(() => router.replace('/onboarding'), 0);
+    return () => clearTimeout(timer);
   }, []);
+
   return null;
 }

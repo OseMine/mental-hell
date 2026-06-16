@@ -1,4 +1,5 @@
 import { useHealthStore } from "@/src/store/healthStore";
+import { useSettingsStore } from "@/src/store/settingsStore";
 import { exportHealthDataAsJSON } from "@/src/utils/exporter";
 import { Background } from "@/src/widgets/Background";
 import { CustomCard } from "@/src/widgets/CustomCard";
@@ -14,7 +15,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { MD3Theme, Text, useTheme } from "react-native-paper";
+import { MD3Theme, RadioButton, Text, useTheme } from "react-native-paper";
 
 // Configure notification handler
 Notifications.setNotificationHandler({
@@ -30,6 +31,14 @@ Notifications.setNotificationHandler({
 export default function SettingsScreen() {
   const theme = useTheme() as MD3Theme;
   const { dailyLogs, weeklyAssessments, clearAllData } = useHealthStore();
+  const {
+    language,
+    setLanguage,
+    accentColor,
+    setAccentColor,
+    colorScheme,
+    setColorScheme,
+  } = useSettingsStore();
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -46,8 +55,8 @@ export default function SettingsScreen() {
     }
 
     const permissions = await Notifications.getPermissionsAsync();
-    const isGranted = permissions.granted || permissions.android?.granted;
-    setNotificationsEnabled(!!isGranted);
+    // Simply check permissions.granted directly
+    setNotificationsEnabled(permissions.granted);
   };
 
   const handleNotificationsToggle = async () => {
@@ -63,8 +72,8 @@ export default function SettingsScreen() {
     if (!notificationsEnabled) {
       // Request permissions
       const permissions = await Notifications.requestPermissionsAsync();
-      const isGranted = permissions.granted || permissions.android?.granted;
-      if (isGranted) {
+      // Simply check permissions.granted directly
+      if (permissions.granted) {
         setNotificationsEnabled(true);
         scheduleNotifications();
         Alert.alert("Erfolg", "Benachrichtigungen aktiviert");
@@ -200,6 +209,96 @@ export default function SettingsScreen() {
         <Text variant="bodyMedium" style={{ color: theme.colors.outline }}>
           Einstellungen & Datenverwaltung
         </Text>
+      </View>
+
+      {/* Language Section */}
+      <View style={styles.section}>
+        <Text
+          variant="titleMedium"
+          style={[styles.sectionTitle, { color: theme.colors.onBackground }]}
+        >
+          Sprache
+        </Text>
+        <CustomCard style={styles.langCard}>
+          <RadioButton.Group
+            onValueChange={(value) => setLanguage(value)}
+            value={language}
+          >
+            <RadioButton.Item label="Deutsch" value="de" />
+            <RadioButton.Item label="English" value="en" />
+          </RadioButton.Group>
+        </CustomCard>
+      </View>
+
+      {/* Appearance Section */}
+      <View style={styles.section}>
+        <Text
+          variant="titleMedium"
+          style={[styles.sectionTitle, { color: theme.colors.onBackground }]}
+        >
+          Erscheinungsbild
+        </Text>
+
+        <CustomCard style={styles.settingItem}>
+          <View style={styles.appearanceRow}>
+            <Ionicons
+              name="color-palette"
+              size={22}
+              color={theme.colors.primary}
+              style={styles.settingIcon}
+            />
+            <Text variant="bodyLarge" style={{ fontWeight: "600", marginRight: 12 }}>
+              Akzentfarbe
+            </Text>
+          </View>
+          <View style={styles.colorPalette}>
+            {["#6750A4", "#2E7D32", "#C62828", "#0288D1", "#F57C00"].map(
+              (color) => (
+                <TouchableOpacity
+                  key={color}
+                  onPress={() => setAccentColor(color)}
+                  style={[
+                    styles.colorSwatch,
+                    { backgroundColor: color },
+                    accentColor === color && styles.colorSwatchSelected,
+                  ]}
+                />
+              ),
+            )}
+          </View>
+        </CustomCard>
+
+        <CustomCard style={styles.settingItem}>
+          <View style={styles.switchRow}>
+            <View style={styles.appearanceRow}>
+              <Ionicons
+                name="moon"
+                size={22}
+                color={theme.colors.primary}
+                style={styles.settingIcon}
+              />
+              <Text variant="bodyLarge" style={{ fontWeight: "600" }}>
+                Dunkles Design
+              </Text>
+            </View>
+            <Switch
+              value={colorScheme === "dark"}
+              onValueChange={(val) =>
+                setColorScheme(val ? "dark" : "light")
+              }
+              trackColor={{
+                false: theme.colors.surfaceVariant,
+                true: theme.colors.primary,
+              }}
+              thumbColor={
+                colorScheme === "dark"
+                  ? theme.colors.onPrimary
+                  : theme.colors.outline
+              }
+              ios_backgroundColor={theme.colors.surfaceVariant}
+            />
+          </View>
+        </CustomCard>
       </View>
 
       {/* Statistics Section */}
@@ -351,7 +450,7 @@ export default function SettingsScreen() {
               styles.settingItem,
               {
                 backgroundColor: `${theme.colors.error}14`, // ~8% Opacity Hex
-                borderColor: theme.colors.errorVariant || theme.colors.error,
+                borderColor: theme.colors.error,
               },
             ]}
           >
@@ -475,6 +574,39 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 14,
     paddingVertical: 12,
+  },
+  langCard: {
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+  },
+  colorPalette: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  colorSwatch: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+  },
+  colorSwatchSelected: {
+    borderWidth: 3,
+    borderColor: "#ffffff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  appearanceRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  switchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
   },
   settingItemLeft: {
     flexDirection: "row",

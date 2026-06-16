@@ -1,11 +1,10 @@
 // src/widgets/CustomCard.tsx
 import React from 'react';
-import { StyleSheet, View, ViewStyle } from 'react-native';
+import { StyleSheet, View, ViewStyle, StyleProp } from 'react-native';
 import { useAppTheme } from '../theme/useAppTheme';
-
 interface CustomCardProps {
   children: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function CustomCard({ children, style }: CustomCardProps) {

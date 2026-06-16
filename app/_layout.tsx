@@ -10,16 +10,17 @@ export default function RootLayout() {
   const { accentColor, colorScheme } = useSettingsStore();
   const systemColorScheme = useColorScheme();
 
-  const { theme } = useMaterial3Theme({ fallbackSourceColor: accentColor || '#6750A4' });
+  const { theme, updateTheme } = useMaterial3Theme({ fallbackSourceColor: accentColor || '#6750A4' });
+
+  useEffect(() => {
+    if (accentColor) updateTheme(accentColor);
+  }, [accentColor]);
 
   const isDark = colorScheme === 'dark' || (colorScheme === 'system' && systemColorScheme === 'dark');
 
   const paperTheme = isDark
     ? { ...MD3DarkTheme, colors: theme.dark }
     : { ...MD3LightTheme, colors: theme.light };
-
-  // HINWEIS: Der language-Effekt wurde hier entfernt, 
-  // damit TypeScript nicht mehr meckert!
 
   return (
     <PaperProvider theme={paperTheme}>
