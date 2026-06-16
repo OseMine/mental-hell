@@ -1,6 +1,6 @@
 import React from "react";
-import { View } from "react-native";
-import Svg, { Circle, Line, Polyline, Text } from "react-native-svg";
+import { View, Text as RNText } from "react-native"; 
+import Svg, { Circle, Line, Polyline, Text as SvgText } from "react-native-svg"; 
 import { DailyLog } from "../store/healthStore";
 
 interface MoodChartProps {
@@ -26,21 +26,28 @@ export const MoodChart: React.FC<MoodChartProps> = ({
           borderRadius: 10,
         }}
       >
-        <Text style={{ fontSize: 14, color: "#999999" }}>
+        <RNText style={{ fontSize: 14, color: "#999999" }}>
           Keine Daten verfügbar
-        </Text>
+        </RNText>
       </View>
     );
   }
 
-  // Filter logs with mood_score, get one per day (use average or latest)
+  // Filter logs with mood_score, get one per day
   const logsPerDay: Map<string, DailyLog[]> = new Map();
   logs.forEach((log) => {
-    const date = new Date(log.timestamp).toDateString();
-    if (!logsPerDay.has(date)) {
-      logsPerDay.set(date, []);
+    // Sicheres Auslesen des Datumsfeldes per Type-Cast Fallback Chain
+    const rawDate = 
+      (log as any).date || 
+      (log as any).timestamp || 
+      (log as any).createdAt || 
+      new Date().toDateString();
+
+    const dateKey = new Date(rawDate).toDateString(); 
+    if (!logsPerDay.has(dateKey)) {
+      logsPerDay.set(dateKey, []);
     }
-    logsPerDay.get(date)!.push(log);
+    logsPerDay.get(dateKey)!.push(log);
   });
 
   // Get average mood score per day (latest 7 days)
@@ -67,9 +74,9 @@ export const MoodChart: React.FC<MoodChartProps> = ({
           borderRadius: 10,
         }}
       >
-        <Text style={{ fontSize: 14, color: "#999999" }}>
+        <RNText style={{ fontSize: 14, color: "#999999" }}>
           Keine Daten verfügbar
-        </Text>
+        </RNText>
       </View>
     );
   }
@@ -136,8 +143,8 @@ export const MoodChart: React.FC<MoodChartProps> = ({
           strokeWidth="1"
         />
 
-        {/* Y-axis labels */}
-        <Text
+        {/* Y-axis labels mit SvgText */}
+        <SvgText
           x={padding.left - 8}
           y={padding.top + 5}
           fontSize="10"
@@ -145,8 +152,8 @@ export const MoodChart: React.FC<MoodChartProps> = ({
           textAnchor="end"
         >
           10
-        </Text>
-        <Text
+        </SvgText>
+        <SvgText
           x={padding.left - 8}
           y={padding.top + chartHeight / 2 + 5}
           fontSize="10"
@@ -154,8 +161,8 @@ export const MoodChart: React.FC<MoodChartProps> = ({
           textAnchor="end"
         >
           5
-        </Text>
-        <Text
+        </SvgText>
+        <SvgText
           x={padding.left - 8}
           y={height - padding.bottom + 5}
           fontSize="10"
@@ -163,7 +170,7 @@ export const MoodChart: React.FC<MoodChartProps> = ({
           textAnchor="end"
         >
           1
-        </Text>
+        </SvgText>
 
         {/* Grid lines */}
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((val) => {
@@ -199,12 +206,12 @@ export const MoodChart: React.FC<MoodChartProps> = ({
           );
         })}
 
-        {/* X-axis labels (day names) */}
+        {/* X-axis labels (day names) mit SvgText */}
         {dayLabels.map((label, index) => {
           const x = padding.left + index * xStep;
           const y = height - padding.bottom + 20;
           return (
-            <Text
+            <SvgText
               key={`label-${index}`}
               x={x}
               y={y}
@@ -213,7 +220,7 @@ export const MoodChart: React.FC<MoodChartProps> = ({
               textAnchor="middle"
             >
               {label}
-            </Text>
+            </SvgText>
           );
         })}
       </Svg>

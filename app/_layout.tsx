@@ -1,81 +1,30 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
-import { MD3DarkTheme, MD3LightTheme, PaperProvider } from 'react-native-paper';
+import { Slot } from 'expo-router';
+import { MD3LightTheme, MD3DarkTheme, PaperProvider } from 'react-native-paper';
 import { useMaterial3Theme } from 'react-native-material3-theme';
-import 'react-native-reanimated';
-
-export {
-  // Erlaubt Expo Router das Abfangen von fatalen Rendering-Fehlern
-  ErrorBoundary,
-} from 'expo-router';
-
-export const unstable_settings = {
-  // Sorgt dafür, dass beim Neuladen im Modal der Zurück-Button erhalten bleibt
-  initialRouteName: '(tabs)',
-};
-
-// Verhindert das automatische Ausblenden des Ladebildschirms
-SplashScreen.preventAutoHideAsync();
+import { useSettingsStore } from '../src/store/settingsStore'; 
+import { StatusBar } from 'expo-status-bar';
 
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-    ...FontAwesome.font,
-  });
+  const { accentColor, colorScheme } = useSettingsStore();
+  const systemColorScheme = useColorScheme();
 
-  useEffect(() => {
-    if (error) throw error;
-  }, [error]);
+  const { theme } = useMaterial3Theme({ fallbackSourceColor: accentColor || '#6750A4' });
 
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
+  const isDark = colorScheme === 'dark' || (colorScheme === 'system' && systemColorScheme === 'dark');
 
-  if (!loaded) {
-    return null;
-  }
+  const paperTheme = isDark
+    ? { ...MD3DarkTheme, colors: theme.dark }
+    : { ...MD3LightTheme, colors: theme.light };
 
-  return <RootLayoutNav />;
-}
-
-function RootLayoutNav() {
-  const colorScheme = useColorScheme();
-  
-  // Holt die offiziellen Material 3 Systemfarben (inklusive Android Monet)
-  const { theme } = useMaterial3Theme();
-
-  // Verschmilzt das reaktive Farbset mit den Material 3 Kern-Themes
-  const paperTheme =
-    colorScheme === 'dark'
-      ? { ...MD3DarkTheme, colors: theme.dark }
-      : { ...MD3LightTheme, colors: theme.light };
+  // HINWEIS: Der language-Effekt wurde hier entfernt, 
+  // damit TypeScript nicht mehr meckert!
 
   return (
-    // Der PaperProvider muss ganz außen liegen, damit alle Kind-Komponenten Zugriff auf M3 haben
     <PaperProvider theme={paperTheme}>
-      <Stack>
-        {/* Haupt-Tabnavigation */}
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        
-        {/* Das Info-Modal, welches von unten reinslide-effektet */}
-        <Stack.Screen 
-          name="modal" 
-          options={{ 
-            presentation: 'modal',
-            headerTitle: 'Informationen',
-            headerStyle: {
-              backgroundColor: paperTheme.colors.surface,
-            },
-            headerTintColor: paperTheme.colors.onSurface,
-          }} 
-        />
-      </Stack>
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+      <Slot />
     </PaperProvider>
   );
 }

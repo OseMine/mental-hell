@@ -1,12 +1,25 @@
-import React from "react";
-import { Tabs } from "expo-router";
-import { useTheme, MD3Theme } from "react-native-paper";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { useClientOnlyValue } from "@/components/useClientOnlyValue";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { Tabs } from "expo-router";
+import React from "react";
+import { MD3Theme, useTheme } from "react-native-paper";
 
 // Ein zentraler, wiederverwendbarer Tab-Bar-Icon-Renderer
-function TabBarIcon({ name, color }: { name: React.ComponentProps<typeof Ionicons>["name"]; color: string }) {
-  return <Ionicons size={24} name={name} color={color} style={{ marginBottom: -3 }} />;
+function TabBarIcon({
+  name,
+  color,
+}: {
+  name: React.ComponentProps<typeof Ionicons>["name"];
+  color: string;
+}) {
+  return (
+    <Ionicons
+      size={24}
+      name={name}
+      color={color}
+      style={{ marginBottom: -3 }}
+    />
+  );
 }
 
 export default function TabLayout() {
@@ -22,7 +35,7 @@ export default function TabLayout() {
         headerShown: useClientOnlyValue(false, true),
         tabBarStyle: {
           // Hintergrund- und Trennlinienfarben direkt aus dem globalen MD3-Theme
-          backgroundColor: theme.colors.elevation.level2, 
+          backgroundColor: theme.colors.elevation.level2,
           borderTopColor: theme.colors.surfaceVariant,
           elevation: 8, // Subtiler Schatten für Android
           shadowOpacity: 0.1, // Subtiler Schatten für iOS
@@ -42,14 +55,16 @@ export default function TabLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
-          headerTitle: "Mental Health Tracker",
+          headerTitle: "Mental Hell",
         }}
       />
       <Tabs.Screen
         name="today"
         options={{
           title: "Heute",
-          tabBarIcon: ({ color }) => <TabBarIcon name="heart-circle" color={color} />,
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon name="heart-circle" color={color} />
+          ),
           headerTitle: "Tages-Check-Ins",
         }}
       />
@@ -57,7 +72,9 @@ export default function TabLayout() {
         name="analytics"
         options={{
           title: "Analyse",
-          tabBarIcon: ({ color }) => <TabBarIcon name="bar-chart" color={color} />,
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon name="bar-chart" color={color} />
+          ),
           headerTitle: "Analyse & Fragebogen",
         }}
       />
@@ -65,7 +82,9 @@ export default function TabLayout() {
         name="settings"
         options={{
           title: "Optionen",
-          tabBarIcon: ({ color }) => <TabBarIcon name="settings" color={color} />,
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon name="settings" color={color} />
+          ),
           headerTitle: "Einstellungen",
         }}
       />

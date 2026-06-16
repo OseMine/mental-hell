@@ -1,13 +1,20 @@
-import React, { useEffect, useState } from "react";
-import { Alert, Platform, StyleSheet, Switch, TouchableOpacity, View } from "react-native";
-import { Text, useTheme, MD3Theme } from "react-native-paper";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import * as Notifications from "expo-notifications";
 import { useHealthStore } from "@/src/store/healthStore";
 import { exportHealthDataAsJSON } from "@/src/utils/exporter";
 import { Background } from "@/src/widgets/Background";
 import { CustomCard } from "@/src/widgets/CustomCard";
 import { InfoBox } from "@/src/widgets/InfoBox";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import * as Notifications from "expo-notifications";
+import React, { useEffect, useState } from "react";
+import {
+  Alert,
+  Platform,
+  StyleSheet,
+  Switch,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { MD3Theme, Text, useTheme } from "react-native-paper";
 
 // Configure notification handler
 Notifications.setNotificationHandler({
@@ -184,7 +191,10 @@ export default function SettingsScreen() {
   return (
     <Background scrollable={true}>
       <View style={styles.header}>
-        <Text variant="headlineLarge" style={[styles.headerTitle, { color: theme.colors.onBackground }]}>
+        <Text
+          variant="headlineLarge"
+          style={[styles.headerTitle, { color: theme.colors.onBackground }]}
+        >
           Optionen
         </Text>
         <Text variant="bodyMedium" style={{ color: theme.colors.outline }}>
@@ -194,7 +204,10 @@ export default function SettingsScreen() {
 
       {/* Statistics Section */}
       <View style={styles.section}>
-        <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+        <Text
+          variant="titleMedium"
+          style={[styles.sectionTitle, { color: theme.colors.onBackground }]}
+        >
           Datenstatistiken
         </Text>
         <View style={styles.statisticsGrid}>
@@ -206,10 +219,16 @@ export default function SettingsScreen() {
                 color={theme.colors.primary}
                 style={styles.statisticIcon}
               />
-              <Text variant="headlineSmall" style={[styles.statisticValue, { color: theme.colors.primary }]}>
+              <Text
+                variant="headlineSmall"
+                style={[styles.statisticValue, { color: theme.colors.primary }]}
+              >
                 {item.value}
               </Text>
-              <Text variant="labelSmall" style={{ color: theme.colors.outline, textAlign: 'center' }}>
+              <Text
+                variant="labelSmall"
+                style={{ color: theme.colors.outline, textAlign: "center" }}
+              >
                 {item.label}
               </Text>
             </CustomCard>
@@ -219,7 +238,10 @@ export default function SettingsScreen() {
 
       {/* Export Section */}
       <View style={styles.section}>
-        <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+        <Text
+          variant="titleMedium"
+          style={[styles.sectionTitle, { color: theme.colors.onBackground }]}
+        >
           Daten exportieren
         </Text>
 
@@ -233,15 +255,27 @@ export default function SettingsScreen() {
                 style={styles.settingIcon}
               />
               <View style={styles.settingTextContent}>
-                <Text variant="bodyLarge" style={{ fontWeight: "600", color: theme.colors.onSurface }}>
+                <Text
+                  variant="bodyLarge"
+                  style={{ fontWeight: "600", color: theme.colors.onSurface }}
+                >
                   JSON-Datei exportieren
                 </Text>
-                <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
-                  {isExporting ? "Wird exportiert..." : "Lade deine Daten herunter"}
+                <Text
+                  variant="bodySmall"
+                  style={{ color: theme.colors.outline }}
+                >
+                  {isExporting
+                    ? "Wird exportiert..."
+                    : "Lade deine Daten herunter"}
                 </Text>
               </View>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={theme.colors.outline} />
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color={theme.colors.outline}
+            />
           </CustomCard>
         </TouchableOpacity>
 
@@ -252,7 +286,10 @@ export default function SettingsScreen() {
 
       {/* Notifications Section */}
       <View style={styles.section}>
-        <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+        <Text
+          variant="titleMedium"
+          style={[styles.sectionTitle, { color: theme.colors.onBackground }]}
+        >
           Erinnerungen
         </Text>
 
@@ -265,7 +302,10 @@ export default function SettingsScreen() {
               style={styles.settingIcon}
             />
             <View style={styles.settingTextContent}>
-              <Text variant="bodyLarge" style={{ fontWeight: "600", color: theme.colors.onSurface }}>
+              <Text
+                variant="bodyLarge"
+                style={{ fontWeight: "600", color: theme.colors.onSurface }}
+              >
                 Tägliche Benachrichtigungen
               </Text>
               <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
@@ -276,8 +316,15 @@ export default function SettingsScreen() {
           <Switch
             value={notificationsEnabled}
             onValueChange={handleNotificationsToggle}
-            trackColor={{ false: theme.colors.surfaceVariant, true: theme.colors.primary }}
-            thumbColor={notificationsEnabled ? theme.colors.onPrimary : theme.colors.outline}
+            trackColor={{
+              false: theme.colors.surfaceVariant,
+              true: theme.colors.primary,
+            }}
+            thumbColor={
+              notificationsEnabled
+                ? theme.colors.onPrimary
+                : theme.colors.outline
+            }
             ios_backgroundColor={theme.colors.surfaceVariant}
           />
         </CustomCard>
@@ -291,18 +338,21 @@ export default function SettingsScreen() {
 
       {/* Data Management Section */}
       <View style={styles.section}>
-        <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+        <Text
+          variant="titleMedium"
+          style={[styles.sectionTitle, { color: theme.colors.onBackground }]}
+        >
           Datenverwaltung
         </Text>
 
         <TouchableOpacity onPress={handleClearAllData}>
-          <CustomCard 
+          <CustomCard
             style={[
-              styles.settingItem, 
-              { 
+              styles.settingItem,
+              {
                 backgroundColor: `${theme.colors.error}14`, // ~8% Opacity Hex
-                borderColor: theme.colors.errorVariant || theme.colors.error 
-              }
+                borderColor: theme.colors.errorVariant || theme.colors.error,
+              },
             ]}
           >
             <View style={styles.settingItemLeft}>
@@ -313,41 +363,70 @@ export default function SettingsScreen() {
                 style={styles.settingIcon}
               />
               <View style={styles.settingTextContent}>
-                <Text variant="bodyLarge" style={{ fontWeight: "600", color: theme.colors.error }}>
+                <Text
+                  variant="bodyLarge"
+                  style={{ fontWeight: "600", color: theme.colors.error }}
+                >
                   Alle Daten löschen
                 </Text>
-                <Text variant="bodySmall" style={{ color: theme.colors.outline }}>
+                <Text
+                  variant="bodySmall"
+                  style={{ color: theme.colors.outline }}
+                >
                   Permanente Löschung aller Einträge
                 </Text>
               </View>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={theme.colors.error} />
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color={theme.colors.error}
+            />
           </CustomCard>
         </TouchableOpacity>
       </View>
 
       {/* About Section */}
       <View style={styles.section}>
-        <Text variant="titleMedium" style={[styles.sectionTitle, { color: theme.colors.onBackground }]}>
+        <Text
+          variant="titleMedium"
+          style={[styles.sectionTitle, { color: theme.colors.onBackground }]}
+        >
           Über diese App
         </Text>
 
         <CustomCard style={styles.aboutCard}>
           <View style={styles.aboutHeaderRow}>
-            <Ionicons name="information-circle" size={22} color={theme.colors.primary} />
+            <Ionicons
+              name="information-circle"
+              size={22}
+              color={theme.colors.primary}
+            />
             <View style={styles.settingTextContent}>
-              <Text variant="bodyLarge" style={{ fontWeight: "700", color: theme.colors.onSurface }}>
-                Mental Health Tracker
+              <Text
+                variant="bodyLarge"
+                style={{ fontWeight: "700", color: theme.colors.onSurface }}
+              >
+                Mental Hell
               </Text>
-              <Text variant="labelSmall" style={{ color: theme.colors.outline, marginTop: 1 }}>
+              <Text
+                variant="labelSmall"
+                style={{ color: theme.colors.outline, marginTop: 1 }}
+              >
                 Version 1.0.0
               </Text>
             </View>
           </View>
-          <Text variant="bodyMedium" style={[styles.aboutDescription, { color: theme.colors.onSurfaceVariant }]}>
-            Eine App zur Verfolgung deiner psychischen Gesundheit mit PHQ-9
-            und GAD-7 Fragebögen. Die Daten werden verschlüsselt und lokal auf deinem Gerät
-            gespeichert.
+          <Text
+            variant="bodyMedium"
+            style={[
+              styles.aboutDescription,
+              { color: theme.colors.onSurfaceVariant },
+            ]}
+          >
+            Eine App zur Verfolgung deiner psychischen Gesundheit mit PHQ-9 und
+            GAD-7 Fragebögen. Die Daten werden verschlüsselt und lokal auf
+            deinem Gerät gespeichert.
           </Text>
         </CustomCard>
       </View>
