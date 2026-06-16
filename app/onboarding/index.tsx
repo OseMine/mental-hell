@@ -1,7 +1,7 @@
 import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 import { useMaterial3Theme } from "react-native-material3-theme";
 import {
     Button,
@@ -57,13 +57,12 @@ export default function OnboardingScreen() {
     if (step > 0) setStep((s) => s - 1);
   };
 
-  // Trigger für Expo Notifications System-Dialog
   const requestNotificationPermission = async () => {
-    const { status } = await Notifications.requestPermissionsAsync();
-    if (status !== "granted") {
-      // Optional: Hier ein Fallback-UI einblenden, falls abgelehnt
+    if (Platform.OS === "web") {
+      handleNext();
+      return;
     }
-    // Nach der Entscheidung automatisch weiter zum nächsten Schritt
+    const { status } = await Notifications.requestPermissionsAsync();
     handleNext();
   };
 

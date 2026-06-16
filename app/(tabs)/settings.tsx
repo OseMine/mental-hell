@@ -17,17 +17,6 @@ import {
 } from "react-native";
 import { MD3Theme, RadioButton, Text, useTheme } from "react-native-paper";
 
-// Configure notification handler
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
-
 export default function SettingsScreen() {
   const theme = useTheme() as MD3Theme;
   const { dailyLogs, weeklyAssessments, clearAllData } = useHealthStore();
@@ -43,7 +32,20 @@ export default function SettingsScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  // Check notification permissions on mount
+  useEffect(() => {
+    try {
+      Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowAlert: true,
+          shouldPlaySound: true,
+          shouldSetBadge: false,
+          shouldShowBanner: true,
+          shouldShowList: true,
+        }),
+      });
+    } catch {}
+  }, []);
+
   useEffect(() => {
     checkNotificationPermissions();
   }, []);

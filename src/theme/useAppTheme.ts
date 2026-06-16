@@ -1,22 +1,21 @@
-// src/theme/useAppTheme.ts
 import { useColorScheme } from 'react-native';
 import { MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
-import Colors from '@/constants/Colors'; // Deine ursprünglichen Farbdefinitionen
+import { useSettingsStore } from '../store/settingsStore';
+import Colors from '@/constants/Colors';
 
 export function useAppTheme() {
-  const colorScheme = useColorScheme() ?? 'light';
-  const isDark = colorScheme === 'dark';
+  const settingsColorScheme = useSettingsStore((s) => s.colorScheme);
+  const systemColorScheme = useColorScheme();
 
-  // Wähle das offizielle Material 3 Basis-Theme aus
+  const isDark = settingsColorScheme === 'dark' || (settingsColorScheme === 'system' && systemColorScheme === 'dark');
+
   const baseTheme = isDark ? MD3DarkTheme : MD3LightTheme;
-  const legacyColors = Colors[colorScheme];
+  const legacyColors = Colors[isDark ? 'dark' : 'light'];
 
   return {
     ...baseTheme,
     colors: {
       ...baseTheme.colors,
-      // Hier mappen wir deine alten Styles auf das neue System,
-      // damit bestehende Screens beim Umbau nicht kaputtgehen!
       legacyText: legacyColors.text,
       legacyTint: legacyColors.tint,
       legacyCard: legacyColors.card,
