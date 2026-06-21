@@ -1,45 +1,21 @@
 import { useClientOnlyValue } from "@/components/useClientOnlyValue";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { Tabs } from "expo-router";
 import React from "react";
 import { MD3Theme, useTheme } from "react-native-paper";
-
-// Ein zentraler, wiederverwendbarer Tab-Bar-Icon-Renderer
-function TabBarIcon({
-  name,
-  color,
-}: {
-  name: React.ComponentProps<typeof Ionicons>["name"];
-  color: string;
-}) {
-  return (
-    <Ionicons
-      size={24}
-      name={name}
-      color={color}
-      style={{ marginBottom: -3 }}
-    />
-  );
-}
+import { FrostedTabBar } from "@/src/components/FrostedTabBar";
+import { useTranslation } from "@/src/i18n/useTranslation";
 
 export default function TabLayout() {
   const theme = useTheme() as MD3Theme;
+  const { t } = useTranslation();
 
   return (
     <Tabs
+      tabBar={(props) => <FrostedTabBar {...props} />}
       screenOptions={{
-        // Nutzt die primäre Markenfarbe von MD3 für den aktiven Zustand
         tabBarActiveTintColor: theme.colors.primary,
-        // Nutzt die dezente Outline-Farbe für inaktive Tabs
         tabBarInactiveTintColor: theme.colors.outline,
         headerShown: useClientOnlyValue(false, true),
-        tabBarStyle: {
-          // Hintergrund- und Trennlinienfarben direkt aus dem globalen MD3-Theme
-          backgroundColor: theme.colors.elevation.level2,
-          borderTopColor: theme.colors.surfaceVariant,
-          elevation: 8, // Subtiler Schatten für Android
-          shadowOpacity: 0.1, // Subtiler Schatten für iOS
-        },
         headerStyle: {
           backgroundColor: theme.colors.surface,
         },
@@ -53,39 +29,43 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
-          tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
-          headerTitle: "Mental Hell",
+          title: t('tabs.home'),
+          headerTitle: t('headers.homeTitle'),
         }}
       />
       <Tabs.Screen
         name="today"
         options={{
-          title: "Heute",
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="heart-circle" color={color} />
-          ),
-          headerTitle: "Tages-Check-Ins",
+          title: t('tabs.today'),
+          headerTitle: t('headers.todayTitle'),
+        }}
+      />
+      <Tabs.Screen
+        name="journal"
+        options={{
+          title: t('journal.title'),
+          headerTitle: t('journal.title'),
+        }}
+      />
+      <Tabs.Screen
+        name="science"
+        options={{
+          title: t('science.title'),
+          headerTitle: t('science.title'),
         }}
       />
       <Tabs.Screen
         name="analytics"
         options={{
-          title: "Analyse",
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="bar-chart" color={color} />
-          ),
-          headerTitle: "Analyse & Fragebogen",
+          title: t('tabs.analytics'),
+          headerTitle: t('headers.analyticsTitle'),
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: "Optionen",
-          tabBarIcon: ({ color }) => (
-            <TabBarIcon name="settings" color={color} />
-          ),
-          headerTitle: "Einstellungen",
+          title: t('tabs.settings'),
+          headerTitle: t('headers.settingsTitle'),
         }}
       />
     </Tabs>

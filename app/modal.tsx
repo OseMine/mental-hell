@@ -4,26 +4,27 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { Text, Divider, useTheme } from 'react-native-paper';
 import { Background } from '@/src/widgets/Background';
 import { CustomCard } from '@/src/widgets/CustomCard';
+import { useTranslation } from '@/src/i18n/useTranslation';
 
 export default function ModalScreen() {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   return (
     <Background scrollable={false}>
       <View style={styles.container}>
         <CustomCard style={styles.cardLayout}>
           <Text variant="headlineSmall" style={styles.title}>
-            Info-Modal
+            {t('modal.title')}
           </Text>
-          
+
           <Divider style={styles.separator} />
-          
-          <Text 
-            variant="bodyMedium" 
+
+          <Text
+            variant="bodyMedium"
             style={[styles.description, { color: theme.colors.onSurfaceVariant }]}
           >
-            Hier kannst du künftig wichtige Schnelleinstellungen, Erklärungen für deine 
-            Mental-Health-Metriken oder zusätzliche Statistiken anzeigen lassen.
+            {t('modal.description')}
           </Text>
         </CustomCard>
 

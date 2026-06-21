@@ -1,3 +1,38 @@
+name: Build iOS IPA (unsigned)
+
+on:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Unsigned IPA
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Prebuild iOS
+        run: npx expo prebuild --platform ios
+
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install
+
       - name: Build Unsigned IPA
         run: |
           xcodebuild -workspace ios/*.xcworkspace \
@@ -10,9 +45,8 @@
             CODE_SIGNING_IDENTITY="" \
             PROVISIONING_PROFILE_SPECIFIER="" \
             clean build
-            
+
       - name: Package IPA
-        # Da Xcode ohne Zertifikate keine .ipa erstellt, bauen wir sie manuell aus dem .app Bundle
         run: |
           mkdir -p Payload
           cp -r build/Build/Products/Release-iphoneos/*.app Payload/

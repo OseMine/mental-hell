@@ -5,7 +5,7 @@ module.exports = function (api) {
       ['babel-preset-expo', { jsxRuntime: 'automatic' }]
     ],
     plugins: [
-      // We let the preset handle classes, but keep your production optimization here
+      'react-native-reanimated/plugin',
     ],
     env: {
       production: {

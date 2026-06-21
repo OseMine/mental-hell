@@ -1,5 +1,5 @@
 import * as Sharing from "expo-sharing";
-import { Directory, File } from "expo-file-system";
+import { Paths, File, Directory } from "expo-file-system";
 import { Platform } from "react-native";
 import type { DailyLog, WeeklyAssessment } from "../store/healthStore";
 
@@ -92,17 +92,15 @@ async function exportNativeJSON(
   filename: string,
 ): Promise<void> {
   try {
-    const targetDir = new Directory(Directory.documentsDirectory, "exports");
-    if (!targetDir.exists) {
-      await targetDir.createAsync();
-    }
+    const targetDir = new Directory(Paths.document, "exports");
+    targetDir.create({ intermediates: true, idempotent: true });
 
     const targetFile = new File(targetDir, filename);
     if (targetFile.exists) {
-      await targetFile.deleteAsync();
+      targetFile.delete();
     }
 
-    await targetFile.writeAsStringAsync(jsonData);
+    targetFile.write(jsonData);
 
     const isAvailable = await Sharing.isAvailableAsync();
     if (isAvailable) {

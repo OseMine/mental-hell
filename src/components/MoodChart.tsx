@@ -1,6 +1,7 @@
 import React from "react";
-import { View, Text as RNText } from "react-native"; 
-import Svg, { Circle, Line, Polyline, Text as SvgText } from "react-native-svg"; 
+import { View } from "react-native";
+import Svg, { Circle, Line, Polyline, Text as SvgText, Defs, LinearGradient, Stop, Rect } from "react-native-svg";
+import { useTheme, MD3Theme } from "react-native-paper";
 import { DailyLog } from "../store/healthStore";
 
 interface MoodChartProps {
@@ -11,92 +12,76 @@ interface MoodChartProps {
 
 export const MoodChart: React.FC<MoodChartProps> = ({
   logs,
-  width = 320,
-  height = 240,
+  width = 340,
+  height = 220,
 }) => {
+  const theme = useTheme() as MD3Theme;
+
   if (logs.length === 0) {
     return (
       <View
         style={{
           width,
-          height,
+          height: height - 40,
           justifyContent: "center",
           alignItems: "center",
-          backgroundColor: "#FFFFFF",
-          borderRadius: 10,
         }}
       >
-        <RNText style={{ fontSize: 14, color: "#999999" }}>
-          Keine Daten verfügbar
-        </RNText>
+        <SvgText
+          x={width / 2}
+          y={(height - 40) / 2}
+          fontSize="12"
+          fill={theme.colors.outline}
+          textAnchor="middle"
+        >
+          No data
+        </SvgText>
       </View>
     );
   }
 
-  // Filter logs with mood_score, get one per day
   const logsPerDay: Map<string, DailyLog[]> = new Map();
   logs.forEach((log) => {
-    // Sicheres Auslesen des Datumsfeldes per Type-Cast Fallback Chain
-    const rawDate = 
-      (log as any).date || 
-      (log as any).timestamp || 
-      (log as any).createdAt || 
+    const rawDate =
+      (log as any).date ||
+      (log as any).timestamp ||
+      (log as any).createdAt ||
       new Date().toDateString();
-
-    const dateKey = new Date(rawDate).toDateString(); 
+    const dateKey = new Date(rawDate).toDateString();
     if (!logsPerDay.has(dateKey)) {
       logsPerDay.set(dateKey, []);
     }
     logsPerDay.get(dateKey)!.push(log);
   });
 
-  // Get average mood score per day (latest 7 days)
   const dailyAverages = Array.from(logsPerDay.entries())
     .slice(-7)
     .map(([date, dayLogs]) => {
       const avgMood =
         dayLogs.reduce((sum, log) => sum + log.mood_score, 0) / dayLogs.length;
-      return {
-        date,
-        mood: avgMood,
-      };
+      return { date, mood: avgMood };
     });
 
   if (dailyAverages.length === 0) {
     return (
-      <View
-        style={{
-          width,
-          height,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: "#FFFFFF",
-          borderRadius: 10,
-        }}
-      >
-        <RNText style={{ fontSize: 14, color: "#999999" }}>
-          Keine Daten verfügbar
-        </RNText>
+      <View style={{ width, height: height - 40, justifyContent: "center", alignItems: "center" }}>
+        <SvgText x={width / 2} y={(height - 40) / 2} fontSize="12" fill={theme.colors.outline} textAnchor="middle">
+          No data
+        </SvgText>
       </View>
     );
   }
 
-  // Chart dimensions
-  const padding = { top: 20, right: 20, bottom: 40, left: 40 };
+  const padding = { top: 20, right: 16, bottom: 36, left: 36 };
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
-
-  // Scale the mood scores to chart coordinates
   const minMood = 1;
   const maxMood = 10;
   const xStep = chartWidth / Math.max(dailyAverages.length - 1, 1);
 
-  // Convert mood score to Y coordinate
-  const moodToY = (mood: number) => {
-    return chartHeight - ((mood - minMood) / (maxMood - minMood)) * chartHeight;
-  };
+  const moodToY = (mood: number) =>
+    chartHeight - ((mood - minMood) / (maxMood - minMood)) * chartHeight;
 
-  // Generate polyline points for the mood curve
   const polylinePoints = dailyAverages
     .map((item, index) => {
       const x = padding.left + index * xStep;
@@ -105,7 +90,6 @@ export const MoodChart: React.FC<MoodChartProps> = ({
     })
     .join(" ");
 
-  // Generate day labels (abbreviated)
   const dayLabels = dailyAverages.map((item) => {
     const date = new Date(item.date);
     const days = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
@@ -113,67 +97,17 @@ export const MoodChart: React.FC<MoodChartProps> = ({
   });
 
   return (
-    <View
-      style={{
-        width,
-        height,
-        backgroundColor: "#FFFFFF",
-        borderRadius: 10,
-        padding: 10,
-      }}
-    >
+    <View style={{ width, height }}>
       <Svg width={width} height={height}>
-        {/* Y-axis */}
-        <Line
-          x1={padding.left}
-          y1={padding.top}
-          x2={padding.left}
-          y2={height - padding.bottom}
-          stroke="#DDDDDD"
-          strokeWidth="1"
-        />
-
-        {/* X-axis */}
-        <Line
-          x1={padding.left}
-          y1={height - padding.bottom}
-          x2={width - padding.right}
-          y2={height - padding.bottom}
-          stroke="#DDDDDD"
-          strokeWidth="1"
-        />
-
-        {/* Y-axis labels mit SvgText */}
-        <SvgText
-          x={padding.left - 8}
-          y={padding.top + 5}
-          fontSize="10"
-          fill="#999999"
-          textAnchor="end"
-        >
-          10
-        </SvgText>
-        <SvgText
-          x={padding.left - 8}
-          y={padding.top + chartHeight / 2 + 5}
-          fontSize="10"
-          fill="#999999"
-          textAnchor="end"
-        >
-          5
-        </SvgText>
-        <SvgText
-          x={padding.left - 8}
-          y={height - padding.bottom + 5}
-          fontSize="10"
-          fill="#999999"
-          textAnchor="end"
-        >
-          1
-        </SvgText>
+        <Defs>
+          <LinearGradient id="moodGrad" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={theme.colors.primary} stopOpacity="0.15" />
+            <Stop offset="1" stopColor={theme.colors.primary} stopOpacity="0" />
+          </LinearGradient>
+        </Defs>
 
         {/* Grid lines */}
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((val) => {
+        {[2, 4, 6, 8, 10].map((val) => {
           const y = padding.top + moodToY(val);
           return (
             <Line
@@ -182,19 +116,42 @@ export const MoodChart: React.FC<MoodChartProps> = ({
               y1={y}
               x2={width - padding.right}
               y2={y}
-              stroke="#F0F0F0"
+              stroke={theme.colors.outlineVariant}
               strokeWidth="1"
-              strokeDasharray="2,2"
+              strokeDasharray="3,3"
             />
           );
         })}
 
+        {/* Y-axis labels */}
+        {[2, 4, 6, 8, 10].map((val) => (
+          <SvgText
+            key={`yl-${val}`}
+            x={padding.left - 8}
+            y={padding.top + moodToY(val) + 4}
+            fontSize="9"
+            fill={theme.colors.outline}
+            textAnchor="end"
+          >
+            {val}
+          </SvgText>
+        ))}
+
+        {/* Area fill under line */}
+        <Polyline
+          points={`${polylinePoints} ${padding.left + (dailyAverages.length - 1) * xStep},${padding.top + chartHeight} ${padding.left},${padding.top + chartHeight}`}
+          fill="url(#moodGrad)"
+          stroke="none"
+        />
+
         {/* Mood line */}
         <Polyline
           points={polylinePoints}
-          stroke="#2E86DE"
+          stroke={theme.colors.primary}
           strokeWidth="2.5"
           fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         />
 
         {/* Data points */}
@@ -202,22 +159,26 @@ export const MoodChart: React.FC<MoodChartProps> = ({
           const x = padding.left + index * xStep;
           const y = padding.top + moodToY(item.mood);
           return (
-            <Circle key={`point-${index}`} cx={x} cy={y} r="4" fill="#2E86DE" />
+            <React.Fragment key={`point-${index}`}>
+              <Circle cx={x} cy={y} r="5" fill={theme.colors.surface} stroke={theme.colors.primary} strokeWidth="2" />
+              <Circle cx={x} cy={y} r="2.5" fill={theme.colors.primary} />
+            </React.Fragment>
           );
         })}
 
-        {/* X-axis labels (day names) mit SvgText */}
+        {/* X-axis labels */}
         {dayLabels.map((label, index) => {
           const x = padding.left + index * xStep;
-          const y = height - padding.bottom + 20;
+          const y = height - padding.bottom + 16;
           return (
             <SvgText
               key={`label-${index}`}
               x={x}
               y={y}
               fontSize="10"
-              fill="#666666"
+              fill={theme.colors.outline}
               textAnchor="middle"
+              fontWeight="600"
             >
               {label}
             </SvgText>

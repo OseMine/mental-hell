@@ -13,8 +13,8 @@ import {
 } from "react-native-paper";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { useSettingsStore } from "../../src/store/settingsStore";
+import { useTranslation } from "../../src/i18n/useTranslation";
 
-// Die definierten Schritte durch den Onboarding-Prozess
 const STEPS = [
   "language",
   "theme_color",
@@ -26,13 +26,11 @@ const STEPS = [
 export default function OnboardingScreen() {
   const [step, setStep] = useState(0);
   const router = useRouter();
+  const { t } = useTranslation();
 
-  // Holt das aktuelle MD3-Theme von React Native Paper
   const paperTheme = useTheme();
-  // Methode zum Updaten des dynamischen Material You Themes
   const { updateTheme } = useMaterial3Theme();
 
-  // Zustand Store-Anbindung
   const {
     language,
     setLanguage,
@@ -47,7 +45,6 @@ export default function OnboardingScreen() {
     if (step < STEPS.length - 1) {
       setStep((s) => s + 1);
     } else {
-      // Onboarding abschließen, persistieren & umleiten
       finishOnboarding();
       router.replace("/(tabs)");
     }
@@ -73,7 +70,6 @@ export default function OnboardingScreen() {
         { backgroundColor: paperTheme.colors.background },
       ]}
     >
-      {/* Progress Bar (Oben) */}
       <View style={styles.progressContainer}>
         {STEPS.map((_, idx) => (
           <View
@@ -91,9 +87,7 @@ export default function OnboardingScreen() {
         ))}
       </View>
 
-      {/* Interaktiver Step-Content */}
       <View style={styles.stepContainer}>
-        {/* Schritt 1: Sprachauswahl */}
         {STEPS[step] === "language" && (
           <Animated.View
             entering={FadeIn}
@@ -101,10 +95,10 @@ export default function OnboardingScreen() {
             style={styles.animatedContent}
           >
             <Text variant="headlineMedium" style={styles.title}>
-              Sprache wählen
+              {t('onboarding.languageTitle')}
             </Text>
             <Text variant="bodyMedium" style={styles.subtitle}>
-              Wähle deine bevorzugte Sprache für das Interface.
+              {t('onboarding.languageSubtitle')}
             </Text>
 
             <RadioButton.Group
@@ -117,7 +111,6 @@ export default function OnboardingScreen() {
           </Animated.View>
         )}
 
-        {/* Schritt 2: Material 3 Theme / Akzentfarbe */}
         {STEPS[step] === "theme_color" && (
           <Animated.View
             entering={FadeIn}
@@ -125,10 +118,10 @@ export default function OnboardingScreen() {
             style={styles.animatedContent}
           >
             <Text variant="headlineMedium" style={styles.title}>
-              Deine Akzentfarbe
+              {t('onboarding.accentTitle')}
             </Text>
             <Text variant="bodyMedium" style={styles.subtitle}>
-              Individualisiere das Interface mit einer Primärfarbe.
+              {t('onboarding.accentSubtitle')}
             </Text>
 
             <View style={styles.colorPalette}>
@@ -152,7 +145,6 @@ export default function OnboardingScreen() {
           </Animated.View>
         )}
 
-        {/* Schritt 3: Helles / Dunkles Design */}
         {STEPS[step] === "dark_mode" && (
           <Animated.View
             entering={FadeIn}
@@ -160,15 +152,15 @@ export default function OnboardingScreen() {
             style={styles.animatedContent}
           >
             <Text variant="headlineMedium" style={styles.title}>
-              Erscheinungsbild
+              {t('onboarding.themeTitle')}
             </Text>
             <Text variant="bodyMedium" style={styles.subtitle}>
-              Nutze ein helles oder dunkles Design für deine Augen.
+              {t('onboarding.themeSubtitle')}
             </Text>
 
             <Card style={styles.card} mode="outlined">
               <Card.Content style={styles.switchRow}>
-                <Text variant="bodyLarge">Dunkles Design (Dark Mode)</Text>
+                <Text variant="bodyLarge">{t('onboarding.darkMode')}</Text>
                 <Switch
                   value={colorScheme === "dark"}
                   onValueChange={(val) =>
@@ -180,7 +172,6 @@ export default function OnboardingScreen() {
           </Animated.View>
         )}
 
-        {/* Schritt 4: Push-Notifications */}
         {STEPS[step] === "notifications" && (
           <Animated.View
             entering={FadeIn}
@@ -188,26 +179,24 @@ export default function OnboardingScreen() {
             style={styles.animatedContent}
           >
             <Text variant="headlineMedium" style={styles.title}>
-              Erinnerungen
+              {t('onboarding.notificationsTitle')}
             </Text>
             <Text variant="bodyMedium" style={styles.subtitle}>
-              Erlaube Benachrichtigungen, um tägliche Check-ins für deine
-              mentale Gesundheit nicht zu vergessen.
+              {t('onboarding.notificationsSubtitle')}
             </Text>
             <Button
               mode="contained"
               onPress={requestNotificationPermission}
               style={styles.actionButton}
             >
-              Berechtigung erteilen
+              {t('onboarding.grantPermission')}
             </Button>
             <Button mode="text" onPress={handleNext} style={{ marginTop: 8 }}>
-              Später erinnern
+              {t('onboarding.remindLater')}
             </Button>
           </Animated.View>
         )}
 
-        {/* Schritt 5: Willkommen / Ready Screen */}
         {STEPS[step] === "welcome" && (
           <Animated.View
             entering={FadeIn}
@@ -215,17 +204,15 @@ export default function OnboardingScreen() {
             style={styles.animatedContent}
           >
             <Text variant="headlineMedium" style={styles.title}>
-              Alles bereit!
+              {t('onboarding.readyTitle')}
             </Text>
             <Text variant="bodyMedium" style={styles.subtitle}>
-              Deine Einstellungen wurden erfolgreich übernommen. Du kannst dein
-              Journal jetzt vollumfänglich nutzen.
+              {t('onboarding.readySubtitle')}
             </Text>
           </Animated.View>
         )}
       </View>
 
-      {/* Navigationsleiste (Unten) */}
       <View style={styles.navigationRow}>
         <Button
           mode="text"
@@ -233,13 +220,12 @@ export default function OnboardingScreen() {
           onPress={handleBack}
           style={{ opacity: step === 0 ? 0 : 1 }}
         >
-          Zurück
+          {t('common.back')}
         </Button>
 
-        {/* Verstecke den Standard-Weiter-Button im Notification-Step, da der User dort eine Aktion ausführen soll */}
         {STEPS[step] !== "notifications" && (
           <Button mode="contained" onPress={handleNext}>
-            {step === STEPS.length - 1 ? "Starten" : "Weiter"}
+            {step === STEPS.length - 1 ? t('common.start') : t('common.next')}
           </Button>
         )}
       </View>
@@ -297,11 +283,16 @@ const styles = StyleSheet.create({
   colorSwatchSelected: {
     borderWidth: 3,
     borderColor: "#ffffff",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
     elevation: 4,
+    ...Platform.select({
+      web: { boxShadow: "0 2px 3px rgba(0,0,0,0.3)" },
+      default: {
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 3,
+      },
+    }),
   },
   card: {
     marginVertical: 10,

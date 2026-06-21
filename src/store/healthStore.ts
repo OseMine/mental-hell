@@ -26,6 +26,8 @@ export interface DailyLog {
   scheduled_time: string;  // e.g. "08:00"
   opened_at: number;       // unix ms — when user expanded the form
   saved_at: number;        // unix ms — when user pressed Save
+  weather?: string;        // weather condition description
+  activity?: string;       // activity level or type
 }
 
 export interface WeeklyAssessment {
@@ -36,9 +38,21 @@ export interface WeeklyAssessment {
   total_wellbeing_score: number;
 }
 
+export interface JournalEntry {
+  id: string;
+  title: string;
+  content: string;
+  mood_score: number;
+  created_at: number;
+  updated_at: number;
+  tags: string[];
+}
+
 export interface HealthState {
   dailyLogs: DailyLog[];
   weeklyAssessments: WeeklyAssessment[];
+  journalEntries: JournalEntry[];
+  todos: TodoItem[];
   addDailyLog: (log: Omit<DailyLog, "id">) => void;
   addWeeklyAssessment: (assessment: Omit<WeeklyAssessment, "id">) => void;
   clearAllData: () => void;
@@ -48,6 +62,23 @@ export interface HealthState {
   getLastWeeklyAssessment: () => WeeklyAssessment | undefined;
   deleteDailyLog: (id: string) => void;
   getStreak: () => number;
+  addJournalEntry: (entry: Omit<JournalEntry, "id" | "created_at" | "updated_at">) => void;
+  updateJournalEntry: (id: string, data: Partial<Pick<JournalEntry, "title" | "content" | "mood_score" | "tags">>) => void;
+  deleteJournalEntry: (id: string) => void;
+  getJournalEntry: (id: string) => JournalEntry | undefined;
+  getJournalEntries: () => JournalEntry[];
+  getTodosForToday: () => TodoItem[];
+  addTodo: (todo: Omit<TodoItem, "id" | "created_at">) => void;
+  toggleTodo: (id: string) => void;
+  deleteTodo: (id: string) => void;
+}
+
+export interface TodoItem {
+  id: string;
+  text: string;
+  completed: boolean;
+  created_at: number;
+  date: string; // date string for which day it belongs to
 }
 
 export const useHealthStore = create<HealthState>()(
@@ -55,6 +86,8 @@ export const useHealthStore = create<HealthState>()(
     (set, get) => ({
       dailyLogs: [],
       weeklyAssessments: [],
+      journalEntries: [],
+      todos: [],
 
       addDailyLog: (log) =>
         set((state) => ({
@@ -72,7 +105,7 @@ export const useHealthStore = create<HealthState>()(
           ],
         })),
 
-      clearAllData: () => set({ dailyLogs: [], weeklyAssessments: [] }),
+      clearAllData: () => set({ dailyLogs: [], weeklyAssessments: [], journalEntries: [], todos: [] }),
 
       getDailyLogsByType: (type) => {
         const todayStr = new Date().toDateString();
@@ -123,6 +156,61 @@ export const useHealthStore = create<HealthState>()(
         }
         return streak;
       },
+
+      addJournalEntry: (entry) =>
+        set((state) => ({
+          journalEntries: [
+            {
+              id: `journal_${Date.now()}_${Math.random()}`,
+              created_at: Date.now(),
+              updated_at: Date.now(),
+              ...entry,
+            },
+            ...state.journalEntries,
+          ],
+        })),
+
+      updateJournalEntry: (id, data) =>
+        set((state) => ({
+          journalEntries: state.journalEntries.map((e) =>
+            e.id === id ? { ...e, ...data, updated_at: Date.now() } : e
+          ),
+        })),
+
+      deleteJournalEntry: (id) =>
+        set((state) => ({
+          journalEntries: state.journalEntries.filter((e) => e.id !== id),
+        })),
+
+      getJournalEntry: (id) => get().journalEntries.find((e) => e.id === id),
+
+      getJournalEntries: () =>
+        get().journalEntries.slice().sort((a, b) => b.created_at - a.created_at),
+
+      getTodosForToday: () => {
+        const todayStr = new Date().toDateString();
+        return get().todos?.filter((t) => t.date === todayStr) ?? [];
+      },
+
+      addTodo: (todo) =>
+        set((state) => ({
+          todos: [
+            ...(state.todos ?? []),
+            { id: `todo_${Date.now()}_${Math.random()}`, created_at: Date.now(), ...todo },
+          ],
+        })),
+
+      toggleTodo: (id) =>
+        set((state) => ({
+          todos: (state.todos ?? []).map((t) =>
+            t.id === id ? { ...t, completed: !t.completed } : t
+          ),
+        })),
+
+      deleteTodo: (id) =>
+        set((state) => ({
+          todos: (state.todos ?? []).filter((t) => t.id !== id),
+        })),
     }),
     {
       name: "mental-health-store",

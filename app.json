@@ -3,7 +3,7 @@
     "name": "mental-hell",
     "slug": "mental-hell",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "jsEngine": "hermes",
     "icon": "./assets/images/icon.png",
     "scheme": "mentalhell",
@@ -24,22 +24,29 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.mentalhell"
     },
     "web": {
       "bundler": "metro",
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/favicon.png",
       "pwa": {
         "name": "Mental Hell",
         "shortName": "MentalHell",
         "description": "Dein Begleiter für mentale Gesundheit",
-        "backgroundColor": "#ffffff",
-        "themeColor": "#ffffff",
+        "backgroundColor": "#141218",
+        "themeColor": "#6750A4",
         "display": "standalone",
-        "orientation": "portrait",
+        "orientation": "any",
         "icon": "./assets/images/icon.png",
-        "startUrl": "/"
+        "startUrl": "/",
+        "scope": "/",
+        "lang": "de-DE",
+        "categories": ["health", "lifestyle", "productivity"],
+        "iarcRatingId": "",
+        "screenshots": [],
+        "preferRelatedApplications": false
       }
     },
     "plugins": [

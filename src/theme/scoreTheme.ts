@@ -1,28 +1,28 @@
 export function getScoreDetails(score: number | null, colors: any) {
   if (score === null) {
     return {
-      color: colors.outline || '#888888',
+      color: colors.outline,
       label: 'Noch keine Daten',
-      badgeBg: `${colors.outline}22`,
+      badgeBg: colors.surfaceVariant,
     };
   }
   if (score >= 7) {
     return {
-      color: colors.errorContainer ? colors.primary : '#2ECC71', // Nutzt primäres M3-Grün/Themefarbe
+      color: colors.primary,
       label: 'Gut',
-      badgeBg: colors.primaryContainer || '#2ECC7122',
+      badgeBg: colors.primaryContainer,
     };
   }
   if (score >= 4) {
     return {
-      color: colors.tertiary || '#E67E22',
+      color: colors.tertiary,
       label: 'Mittel',
-      badgeBg: `${colors.tertiary}22`,
+      badgeBg: colors.tertiaryContainer,
     };
   }
   return {
-    color: colors.error || '#E74C3C',
+    color: colors.error,
     label: 'Niedrig',
-    badgeBg: colors.errorContainer || '#E74C3C22',
+    badgeBg: colors.errorContainer,
   };
 }

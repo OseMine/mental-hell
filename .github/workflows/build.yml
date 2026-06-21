@@ -1,15 +1,21 @@
-name: Native Android Build (Ohne EAS)
+name: Build Android APK
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  schedule:
+    - cron: '0 2 * * *'
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-    name: Build Android APK
+    name: Build APK
     runs-on: ubuntu-latest
 
     steps:
@@ -26,28 +32,29 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17' # Wichtig für moderne Expo/Android-Builds
+          java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: wrapper
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
 
       - name: Install Dependencies
         run: npm ci
 
-      - name: Generate Native Android Folder
-        # Erstellt den /android Ordner basierend auf deiner app.json
-        run: npx expo prebuild --platform android
+      - name: Expo Prebuild
+        run: npx expo prebuild --platform android --clean
 
-      - name: Build APK with Gradle
-        # Führt den nativen Android-Build aus
+      - name: Build Release APK
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleRelease
+          ./gradlew assembleRelease --build-cache --parallel
 
-      - name: Upload Android Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: android-apk-build
-          # Gradle legt die fertige APK standardmäßig in diesem Verzeichnis ab:
+          name: android-apk-${{ github.sha }}
           path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 7
